@@ -1,0 +1,1403 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>郑明物流脆薯供应链破局与重构——数字化仿真与决策平台</title>
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 FontAwesome 图标库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- 配置自定义颜色与字体 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: {
+                            950: '#081426',
+                            900: '#0F2544',
+                            800: '#16345E',
+                            700: '#1E467D',
+                        },
+                        orange: {
+                            500: '#EA6A1F',
+                            600: '#D45811',
+                            400: '#F58542',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'PingFang SC', 'Microsoft YaHei', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #081426;
+            color: #F8FAFC;
+            overflow-x: hidden;
+        }
+        /* 自定义滑块样式，适合投影演示远距离操作 */
+        input[type=range] {
+            -webkit-appearance: none;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 22px;
+            width: 22px;
+            border-radius: 50%;
+            background: #EA6A1F;
+            cursor: pointer;
+            margin-top: -8px;
+            box-shadow: 0 0 10px rgba(234, 106, 31, 0.8);
+            border: 2px solid #fff;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 6px;
+            cursor: pointer;
+            background: #1E467D;
+            border-radius: 3px;
+        }
+        /* 报警闪烁动画 */
+        @keyframes pulseAlert {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); border-color: #ef4444; }
+            50% { box-shadow: 0 0 25px 6px rgba(239, 68, 68, 0.5); border-color: #fca5a5; }
+        }
+        .alert-active {
+            animation: pulseAlert 1.5s infinite;
+        }
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0F2544; }
+        ::-webkit-scrollbar-thumb { background: #1E467D; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #EA6A1F; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans select-none">
+
+    <!-- 顶部主导航栏 -->
+    <header class="bg-navy-900 border-b border-navy-700/80 px-6 py-3.5 flex flex-wrap items-center justify-between gap-4 shadow-xl sticky top-0 z-50">
+        <div class="flex items-center gap-3.5">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/30">
+                <i class="fa-solid fa-truck-fast text-white text-lg"></i>
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h1 class="text-lg md:text-xl font-bold tracking-wide text-white">郑明物流脆薯供应链破局与重构</h1>
+                    <span class="hidden sm:inline-block px-2.5 py-0.5 text-xs font-semibold bg-orange-500/20 text-orange-400 border border-orange-500/40 rounded-full">数字化仿真与决策平台</span>
+                </div>
+                <p class="text-xs text-slate-400 mt-0.5">案例教学交互系统 · 商流 / 物流 / 信息流 / 资金流“四流合一”实战演练</p>
+            </div>
+        </div>
+
+        <!-- 四大核心模块切换 Tabs -->
+        <nav class="flex items-center bg-navy-950/90 p-1.5 rounded-xl border border-navy-700/60 overflow-x-auto max-w-full">
+            <button onclick="switchTab(1)" id="tab-btn-1" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 bg-orange-500 text-white shadow-md whitespace-nowrap">
+                <i class="fa-solid fa-diagram-project"></i> 1. 网状分段调度沙盘
+            </button>
+            <button onclick="switchTab(2)" id="tab-btn-2" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 text-slate-300 hover:text-white whitespace-nowrap">
+                <i class="fa-solid fa-temperature-three-quarters"></i> 2. T-GPS温控与TMS系统
+            </button>
+            <button onclick="switchTab(3)" id="tab-btn-3" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 text-slate-300 hover:text-white whitespace-nowrap">
+                <i class="fa-solid fa-coins"></i> 3. 动产质押与全权销售测算
+            </button>
+            <button onclick="switchTab(4)" id="tab-btn-4" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 text-slate-300 hover:text-white whitespace-nowrap">
+                <i class="fa-solid fa-comments"></i> 4. 课堂思考题研讨墙
+            </button>
+        </nav>
+
+        <!-- 右侧全局演示工具栏 -->
+        <div class="flex items-center gap-2.5">
+            <button onclick="resetAllSimulations()" class="px-3.5 py-2 rounded-lg bg-navy-800 hover:bg-navy-700 text-slate-200 text-xs font-medium border border-navy-600 transition flex items-center gap-1.5" title="重置所有演示参数">
+                <i class="fa-solid fa-rotate-right text-orange-400"></i> 重置数据
+            </button>
+            <button onclick="toggleFullScreen()" id="fullscreen-btn" class="px-3.5 py-2 rounded-lg bg-navy-800 hover:bg-navy-700 text-slate-200 text-xs font-medium border border-navy-600 transition flex items-center gap-1.5" title="适合教室投影仪全屏展示">
+                <i class="fa-solid fa-expand text-orange-400"></i> <span id="fullscreen-text">全屏演示</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- 全局提示 Toast 消息框（替代 alert） -->
+    <div id="toast-box" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div class="bg-navy-800 border-l-4 border-orange-500 text-white px-5 py-3.5 rounded-xl shadow-2xl flex items-center gap-3">
+            <i id="toast-icon" class="fa-solid fa-circle-check text-orange-400 text-lg"></i>
+            <span id="toast-msg" class="text-sm font-medium">操作成功</span>
+        </div>
+    </div>
+
+    <!-- 主内容区域 -->
+    <main class="flex-1 p-5 md:p-6 max-w-[1600px] w-full mx-auto">
+
+        <!-- ===================================================================== -->
+        <!-- 模块 1：网状分段调度仿真沙盘                                            -->
+        <!-- ===================================================================== -->
+        <section id="module-1" class="module-section space-y-5">
+            <!-- 顶部控制面板 -->
+            <div class="bg-navy-900 rounded-2xl p-5 border border-navy-700/80 shadow-lg flex flex-wrap items-center justify-between gap-6">
+                <!-- 模式切换开关 -->
+                <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <span class="text-sm font-semibold text-slate-300"><i class="fa-solid fa-sliders text-orange-400 mr-1.5"></i>运输组织模式：</span>
+                    <div class="inline-flex rounded-xl bg-navy-950 p-1 border border-navy-700">
+                        <button onclick="setDispatchMode('traditional')" id="btn-mode-trad" class="px-4 py-2 rounded-lg text-sm font-bold transition-all text-slate-400 hover:text-white">
+                            <i class="fa-solid fa-triangle-exclamation mr-1.5"></i>传统点对点直达模式
+                        </button>
+                        <button onclick="setDispatchMode('zhengming')" id="btn-mode-zm" class="px-4 py-2 rounded-lg text-sm font-bold transition-all bg-orange-500 text-white shadow">
+                            <i class="fa-solid fa-network-wired mr-1.5"></i>郑明网状分段接力调度
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 8月收割季日均鲜薯运量滑块 -->
+                <div class="flex-1 min-w-[280px] max-w-xl">
+                    <div class="flex justify-between items-center mb-1.5">
+                        <span class="text-sm font-semibold text-slate-300">8月收割季日均鲜薯运量（类似“春运”集中爆发期）：</span>
+                        <span class="text-lg font-extrabold text-orange-400"><span id="volume-display">3,200</span> 吨/日</span>
+                    </div>
+                    <input type="range" id="volume-slider" min="500" max="5000" step="100" value="3200" oninput="updateDispatchSim()" class="w-full">
+                    <div class="flex justify-between text-xs text-slate-400 mt-1">
+                        <span>500吨 (平峰期)</span>
+                        <span>2,500吨 (常规收割)</span>
+                        <span>5,000吨 (8月底极限峰值)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 沙盘主画面：左侧拓扑动画 + 右侧实时指标与交易日志 -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                <!-- 左侧 Canvas 动态拓扑沙盘 -->
+                <div class="lg:col-span-8 bg-navy-900 rounded-2xl border border-navy-700/80 p-5 flex flex-col shadow-lg">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                        <div>
+                            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-orange-500 animate-ping"></span>
+                                黑龙江马铃薯产区至加工厂运输拓扑沙盘
+                            </h2>
+                            <p id="sandbox-subtitle" class="text-xs text-slate-400 mt-0.5">当前策略：在路线集中局域设立中转站，一车一段接力运行，后半段多仓前置质检清点</p>
+                        </div>
+                        <div class="flex items-center gap-4 text-xs">
+                            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-emerald-400 inline-block"></span>顺畅/接力中转</span>
+                            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-orange-400 inline-block"></span>外部闲置运力池协同</span>
+                            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-red-500 inline-block"></span>长途直达拥堵/变质高危</span>
+                        </div>
+                    </div>
+
+                    <!-- 自适应 Canvas 容器 -->
+                    <div id="sandbox-canvas-container" class="relative w-full h-[380px] md:h-[420px] bg-navy-950 rounded-xl border border-navy-800 overflow-hidden">
+                        <canvas id="dispatch-canvas"></canvas>
+                        <!-- 沙盘底部策略要点悬浮条 -->
+                        <div id="sandbox-banner" class="absolute bottom-3 left-3 right-3 bg-navy-900/90 backdrop-blur border border-navy-700 rounded-xl px-4 py-2.5 flex items-center justify-between text-xs">
+                            <span class="text-orange-400 font-semibold"><i class="fa-solid fa-lightbulb mr-1.5"></i>机制解析：</span>
+                            <span id="sandbox-banner-text" class="text-slate-200">每段路线均有专属车辆分段接力，杜绝疲劳驾驶；中转站提前剔除破损薯，入厂清点效率提升 3.2 倍。</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 右侧 4项核心KPI + 物流交易系统实时配载日志 -->
+                <div class="lg:col-span-4 flex flex-col gap-5">
+                    <!-- 4项核心指标卡片 -->
+                    <div class="grid grid-cols-2 gap-3.5">
+                        <div class="bg-navy-900 p-4 rounded-2xl border border-navy-700/80 shadow">
+                            <div class="text-xs text-slate-400 flex justify-between">
+                                <span>加工厂门口拥堵度</span>
+                                <i class="fa-solid fa-traffic-light text-orange-400"></i>
+                            </div>
+                            <div id="kpi-congestion" class="text-2xl font-extrabold text-emerald-400 mt-1.5">18% (畅通)</div>
+                            <div class="w-full bg-navy-950 h-2 rounded-full mt-2 overflow-hidden">
+                                <div id="bar-congestion" class="bg-emerald-400 h-full transition-all duration-500" style="width: 18%"></div>
+                            </div>
+                        </div>
+
+                        <div class="bg-navy-900 p-4 rounded-2xl border border-navy-700/80 shadow">
+                            <div class="text-xs text-slate-400 flex justify-between">
+                                <span>单车平均疲劳指数</span>
+                                <i class="fa-solid fa-user-clock text-orange-400"></i>
+                            </div>
+                            <div id="kpi-fatigue" class="text-2xl font-extrabold text-emerald-400 mt-1.5">22% (安全)</div>
+                            <div class="w-full bg-navy-950 h-2 rounded-full mt-2 overflow-hidden">
+                                <div id="bar-fatigue" class="bg-emerald-400 h-full transition-all duration-500" style="width: 22%"></div>
+                            </div>
+                        </div>
+
+                        <div class="bg-navy-900 p-4 rounded-2xl border border-navy-700/80 shadow">
+                            <div class="text-xs text-slate-400 flex justify-between">
+                                <span>沿途返程空驶率</span>
+                                <i class="fa-solid fa-truck-arrow-right text-orange-400"></i>
+                            </div>
+                            <div id="kpi-empty" class="text-2xl font-extrabold text-emerald-400 mt-1.5">11.5%</div>
+                            <div class="w-full bg-navy-950 h-2 rounded-full mt-2 overflow-hidden">
+                                <div id="bar-empty" class="bg-emerald-400 h-full transition-all duration-500" style="width: 11.5%"></div>
+                            </div>
+                        </div>
+
+                        <div class="bg-navy-900 p-4 rounded-2xl border border-navy-700/80 shadow">
+                            <div class="text-xs text-slate-400 flex justify-between">
+                                <span>破皮/糖分超标腐损率</span>
+                                <i class="fa-solid fa-seedling text-orange-400"></i>
+                            </div>
+                            <div id="kpi-spoilage" class="text-2xl font-extrabold text-emerald-400 mt-1.5">1.4% (达标)</div>
+                            <div class="w-full bg-navy-950 h-2 rounded-full mt-2 overflow-hidden">
+                                <div id="bar-spoilage" class="bg-emerald-400 h-full transition-all duration-500" style="width: 14%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 物流交易系统（外部闲置运力池）智能配载日志 -->
+                    <div class="bg-navy-900 rounded-2xl border border-navy-700/80 p-4 flex-1 flex flex-col shadow-lg">
+                        <div class="flex items-center justify-between border-b border-navy-800 pb-2.5 mb-2.5">
+                            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-satellite-dish text-orange-400"></i>
+                                物流交易系统（跨区域联运协同池）
+                            </h3>
+                            <span id="pool-status-badge" class="px-2 py-0.5 text-[11px] rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">算法匹配中</span>
+                        </div>
+                        <div id="trading-log-list" class="space-y-2 overflow-y-auto max-h-[210px] text-xs pr-1">
+                            <!-- 动态生成物流交易匹配记录 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===================================================================== -->
+        <!-- 模块 2：T-GPS温控与运输管理系统 (TMS)                                   -->
+        <!-- ===================================================================== -->
+        <section id="module-2" class="module-section hidden space-y-5">
+            <!-- 顶部账号权限切换与模拟突发按钮 -->
+            <div class="bg-navy-900 rounded-2xl p-5 border border-navy-700/80 shadow-lg flex flex-wrap items-center justify-between gap-4">
+                <div class="flex flex-wrap items-center gap-3">
+                    <label class="text-sm font-semibold text-slate-300">
+                        <i class="fa-solid fa-user-shield text-orange-400 mr-1.5"></i>TMS账号权限视图：
+                    </label>
+                    <select id="tms-role-select" onchange="changeTmsRole()" class="bg-navy-950 border border-navy-600 text-white text-sm rounded-xl px-4 py-2 focus:outline-none focus:border-orange-500 font-medium">
+                        <option value="group">集团级管理员视图（全网数据、跨区调度与权限分配）</option>
+                        <option value="enterprise">企业级操作员视图（仅限单线路监控与基础录入）</option>
+                    </select>
+                    <span id="role-permission-tag" class="text-xs px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                        当前权限：全网车辆动态调配 + 外部运力发布 + 异常强行接管
+                    </span>
+                </div>
+
+                <!-- 模拟8月酷暑制冷异常按钮 -->
+                <div class="flex items-center gap-3">
+                    <button onclick="triggerHighTempAlert()" id="btn-sim-alert" class="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-sm shadow-lg shadow-red-600/30 transition flex items-center gap-2">
+                        <i class="fa-solid fa-fire-flame-curved"></i> 模拟8月酷暑制冷异常突发
+                    </button>
+                </div>
+            </div>
+
+            <!-- 异常报警横幅（默认隐藏，点击触发后弹出） -->
+            <div id="tms-alert-banner" class="hidden bg-red-950/90 border-2 border-red-500 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4 alert-active">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-12 h-12 rounded-xl bg-red-600 flex items-center justify-center text-white text-2xl shrink-0">
+                        <i class="fa-solid fa-bell fa-shake"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="px-2 py-0.5 bg-red-600 text-white text-xs font-bold rounded">T-GPS 温度回传一级报警</span>
+                            <h3 class="text-base font-extrabold text-red-200">车辆【黑A·ZM312】制冷压缩机故障，车厢温度飙升至 16.8℃！</h3>
+                        </div>
+                        <p class="text-xs text-red-300 mt-1">风险提示：8月外部气温34℃，若持续超温将导致马铃薯淀粉转化糖分超标、表皮破损，面临脆薯加工厂拒收风险！</p>
+                    </div>
+                </div>
+                <button onclick="resolveHighTempAlert()" class="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-navy-950 font-extrabold text-sm shadow-lg transition flex items-center gap-2 shrink-0">
+                    <i class="fa-solid fa-wrench"></i> 指派最近中转站前置质检与备用冷链车接驳
+                </button>
+            </div>
+
+            <!-- 主工作区：左侧车辆列表 + 右侧温度曲线与报表 -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                <!-- 左侧冷链车队实时监控列表 -->
+                <div class="lg:col-span-5 bg-navy-900 rounded-2xl border border-navy-700/80 p-5 flex flex-col shadow-lg">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-base font-bold text-white"><i class="fa-solid fa-truck-ramp-box text-orange-400 mr-2"></i>在途冷链车队监控（中国冷链网车载终端）</h3>
+                        <span class="text-xs text-slate-400">点击车辆查看轨迹与温控</span>
+                    </div>
+                    <div id="vehicle-list" class="space-y-3">
+                        <!-- JS动态渲染车辆卡片 -->
+                    </div>
+                </div>
+
+                <!-- 右侧选中车辆详情 + 温度实时折线图 -->
+                <div class="lg:col-span-7 flex flex-col gap-5">
+                    <!-- 温度监控曲线卡片 -->
+                    <div class="bg-navy-900 rounded-2xl border border-navy-700/80 p-5 shadow-lg">
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                            <div>
+                                <h3 class="text-base font-bold text-white">
+                                    车厢温度动态回传曲线：<span id="selected-plate" class="text-orange-400">苏A·ZM801</span>
+                                </h3>
+                                <p class="text-xs text-slate-400 mt-0.5">脆薯原料黄金保鲜温区：8.0℃ ~ 12.0℃（严防高温发芽与淀粉糖化）</p>
+                            </div>
+                            <div class="flex items-center gap-3 text-xs">
+                                <span class="px-2.5 py-1 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                                    实时车速：<strong id="selected-speed">76 km/h</strong>
+                                </span>
+                                <span class="px-2.5 py-1 rounded bg-orange-500/15 text-orange-300 border border-orange-500/30">
+                                    当前厢温：<strong id="selected-temp">9.4 ℃</strong>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="w-full h-[230px] bg-navy-950 rounded-xl border border-navy-800 p-2 relative">
+                            <canvas id="temp-chart-canvas"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- 运输管理系统（TMS）功能执行与统计报表 -->
+                    <div class="bg-navy-900 rounded-2xl border border-navy-700/80 p-5 shadow-lg">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-sm font-bold text-white"><i class="fa-solid fa-clipboard-list text-orange-400 mr-2"></i>TMS 车辆档案与动态调度操作台</h3>
+                            <span id="tms-action-notice" class="text-xs text-emerald-400">集团级权限已解锁全部调度指令</span>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4 text-xs">
+                            <div class="bg-navy-950 p-3 rounded-xl border border-navy-800">
+                                <div class="text-slate-400">车辆属性</div>
+                                <div id="veh-type" class="font-bold text-white mt-1">郑明自有冷链车</div>
+                            </div>
+                            <div class="bg-navy-950 p-3 rounded-xl border border-navy-800">
+                                <div class="text-slate-400">当前负责分段</div>
+                                <div id="veh-segment" class="font-bold text-white mt-1">齐齐哈尔 → 肇东中转仓</div>
+                            </div>
+                            <div class="bg-navy-950 p-3 rounded-xl border border-navy-800">
+                                <div class="text-slate-400">装载鲜薯重量</div>
+                                <div id="veh-load" class="font-bold text-orange-400 mt-1">32.5 吨 (优质一级)</div>
+                            </div>
+                            <div class="bg-navy-950 p-3 rounded-xl border border-navy-800">
+                                <div class="text-slate-400">轨迹回放与报表</div>
+                                <div class="font-bold text-emerald-400 mt-1">全程无盲区已存档</div>
+                            </div>
+                        </div>
+
+                        <!-- 权限控制的操作按钮组 -->
+                        <div class="flex flex-wrap gap-3">
+                            <button onclick="tmsAction('基础车辆信息与电子运单录入')" class="px-3.5 py-2 rounded-lg bg-navy-800 hover:bg-navy-700 text-white text-xs font-medium border border-navy-600 transition">
+                                <i class="fa-solid fa-file-pen text-blue-400 mr-1.5"></i>车辆信息与运单录入
+                            </button>
+                            <button onclick="tmsAction('历史运行轨迹回放与温控报表导出')" class="px-3.5 py-2 rounded-lg bg-navy-800 hover:bg-navy-700 text-white text-xs font-medium border border-navy-600 transition">
+                                <i class="fa-solid fa-route text-emerald-400 mr-1.5"></i>历史轨迹回放与统计报表
+                            </button>
+                            <button id="btn-group-dispatch" onclick="tmsAction('跨区域动态调整运输任务与挂靠车辆统筹')" class="px-3.5 py-2 rounded-lg bg-orange-500/20 hover:bg-orange-500/30 text-orange-300 text-xs font-bold border border-orange-500/40 transition">
+                                <i class="fa-solid fa-shuffle mr-1.5"></i>全网动态调配与任务重派 (集团级)
+                            </button>
+                            <button id="btn-group-publish" onclick="tmsAction('将闲置返程空车发布至外部物流交易系统')" class="px-3.5 py-2 rounded-lg bg-orange-500/20 hover:bg-orange-500/30 text-orange-300 text-xs font-bold border border-orange-500/40 transition">
+                                <i class="fa-solid fa-share-nodes mr-1.5"></i>发布外部运力池接单 (集团级)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===================================================================== -->
+        <!-- 模块 3：动产质押与全权销售资金流测算器                                  -->
+        <!-- ===================================================================== -->
+        <section id="module-3" class="module-section hidden space-y-5">
+            <!-- 顶部：教材核心知识点卡片 + 四流闭环商业图谱 -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                <!-- 动产质押概念卡片 -->
+                <div class="lg:col-span-4 bg-gradient-to-br from-navy-900 to-navy-800 rounded-2xl p-5 border border-orange-500/40 shadow-lg flex flex-col justify-between">
+                    <div>
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/20 text-orange-400 text-xs font-bold mb-3">
+                            <i class="fa-solid fa-book-open"></i> 教材核心知识点：动产质押
+                        </div>
+                        <h3 class="text-lg font-bold text-white mb-2">什么是物流金融中的“动产质押”？</h3>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            债务人（脆薯食品公司）或第三人将其动产（收购的马铃薯及加工半成品）移交债权人/监管方（郑明物流）占有，将该动产作为债权的担保。当债务人不履行到期债务时，债权人有权依法以该动产折价或者以拍卖、变卖的价款优先受偿。
+                        </p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-navy-700/80 text-xs text-orange-300 flex items-start gap-2">
+                        <i class="fa-solid fa-key mt-0.5"></i>
+                        <span><strong>破局关键：</strong>郑明依托强大的冷链仓储网络与全程质控能力提供信用担保，敢于替脆薯公司先行垫付 <strong>80%</strong> 收购货款！</span>
+                    </div>
+                </div>
+
+                <!-- 商业模式闭环图（人物角色还原） -->
+                <div class="lg:col-span-8 bg-navy-900 rounded-2xl p-5 border border-navy-700/80 shadow-lg flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-base font-bold text-white"><i class="fa-solid fa-arrows-spin text-orange-400 mr-2"></i>“物流 + 金融 + 贸易”全权销售商业闭环</h3>
+                        <span class="text-xs text-slate-400">打通从“田间最初一公里”到“快餐门店最后一公里”</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-center my-auto">
+                        <!-- 节点1 -->
+                        <div class="bg-navy-950 p-3.5 rounded-xl border border-navy-700 text-center relative">
+                            <div class="w-9 h-9 mx-auto rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mb-2">
+                                <i class="fa-solid fa-tractor"></i>
+                            </div>
+                            <div class="font-bold text-sm text-white">黑龙江马铃薯种植户</div>
+                            <div class="text-[11px] text-slate-400 mt-1">哈尔滨/齐齐哈尔基地<br>急需现款结算、怕烂在地里</div>
+                        </div>
+
+                        <!-- 节点2 -->
+                        <div class="bg-navy-950 p-3.5 rounded-xl border border-navy-700 text-center relative">
+                            <div class="w-9 h-9 mx-auto rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center mb-2">
+                                <i class="fa-solid fa-industry"></i>
+                            </div>
+                            <div class="font-bold text-sm text-white">脆薯食品公司 (黄总)</div>
+                            <div class="text-[11px] text-slate-400 mt-1">面临超2亿集中货款压力<br>半成品薯条库存积压严重</div>
+                        </div>
+
+                        <!-- 节点3（核心枢纽） -->
+                        <div class="bg-gradient-to-b from-orange-500/25 to-navy-950 p-3.5 rounded-xl border-2 border-orange-500 text-center shadow-lg shadow-orange-500/10">
+                            <div class="w-9 h-9 mx-auto rounded-full bg-orange-500 text-white flex items-center justify-center mb-2">
+                                <i class="fa-solid fa-crown"></i>
+                            </div>
+                            <div class="font-extrabold text-sm text-orange-300">郑明物流团队 (杨总)</div>
+                            <div class="text-[11px] text-slate-200 mt-1">① 垫付80%货款(账期60→15天)<br>② 一次性买断半成品库存</div>
+                        </div>
+
+                        <!-- 节点4 -->
+                        <div class="bg-navy-950 p-3.5 rounded-xl border border-navy-700 text-center">
+                            <div class="w-9 h-9 mx-auto rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center mb-2">
+                                <i class="fa-solid fa-burger"></i>
+                            </div>
+                            <div class="font-bold text-sm text-white">麦当劳 / 肯德基终端</div>
+                            <div class="text-[11px] text-slate-400 mt-1">郑明按客户采购计划<br>冷链直送并实现全权销售</div>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 bg-navy-950/80 rounded-xl px-4 py-2.5 border border-navy-800 text-xs text-slate-300 flex flex-wrap justify-between gap-2">
+                        <span><strong class="text-orange-400">对脆薯厂价值：</strong>瞬间释放海量库存占压资金与仓库管理费，专注生产研发。</span>
+                        <span><strong class="text-emerald-400">对郑明物流价值：</strong>突破单一运费天花板，赚取半成品购销差价 + 供应链金融与仓储增值利润。</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 下半部分：交互测算控制台 + 可视化财务对比 -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                <!-- 左侧参数输入滑块 -->
+                <div class="lg:col-span-5 bg-navy-900 rounded-2xl p-5 border border-navy-700/80 shadow-lg space-y-5">
+                    <h3 class="text-base font-bold text-white border-b border-navy-800 pb-3">
+                        <i class="fa-solid fa-calculator text-orange-400 mr-2"></i>供应链金融与贸易收益测算器
+                    </h3>
+
+                    <!-- 滑块1：收购季总货款 -->
+                    <div>
+                        <div class="flex justify-between text-sm mb-1.5">
+                            <span class="text-slate-300 font-medium">1. 收购季鲜薯采购总货款规模：</span>
+                            <span class="text-orange-400 font-extrabold text-lg"><span id="fin-purchase-val">2.00</span> 亿元</span>
+                        </div>
+                        <input type="range" id="fin-purchase-slider" min="0.5" max="5.0" step="0.1" value="2.0" oninput="updateFinanceCalc()" class="w-full">
+                        <div class="flex justify-between text-xs text-slate-500 mt-1">
+                            <span>0.5 亿元</span>
+                            <span>2.0 亿元 (教材案例基准)</span>
+                            <span>5.0 亿元</span>
+                        </div>
+                    </div>
+
+                    <!-- 滑块2：半成品库存买断规模 -->
+                    <div>
+                        <div class="flex justify-between text-sm mb-1.5">
+                            <span class="text-slate-300 font-medium">2. 加工厂半成品薯条库存积压规模：</span>
+                            <span class="text-orange-400 font-extrabold text-lg"><span id="fin-inventory-val">1.20</span> 亿元</span>
+                        </div>
+                        <input type="range" id="fin-inventory-slider" min="0.3" max="3.0" step="0.1" value="1.2" oninput="updateFinanceCalc()" class="w-full">
+                        <div class="flex justify-between text-xs text-slate-500 mt-1">
+                            <span>0.3 亿元</span>
+                            <span>1.2 亿元 (典型季末积压)</span>
+                            <span>3.0 亿元</span>
+                        </div>
+                    </div>
+
+                    <!-- 资金时间价值说明 -->
+                    <div class="bg-navy-950 p-3.5 rounded-xl border border-navy-800 text-xs text-slate-400 space-y-1.5">
+                        <div class="text-slate-200 font-semibold"><i class="fa-solid fa-clock-rotate-left text-orange-400 mr-1.5"></i>资金时间价值与筹资模型参数：</div>
+                        <p>• <strong>支付账期压缩：</strong>由传统 <span class="text-red-400 font-bold">60 天</span> 缩短至 <span class="text-emerald-400 font-bold">15 天</span>（周转提速 <strong>75%</strong>）。</p>
+                        <p>• <strong>货款垫付比例：</strong>郑明通过动产质押承揽支付剩余 <strong>80%</strong> 收购货款。</p>
+                        <p>• <strong>买断购销差价率：</strong>全权销售整合下综合贸易差价与冷链仓储增值率按 <strong>8.5%</strong> 测算。</p>
+                    </div>
+                </div>
+
+                <!-- 右侧测算结果大屏卡片 + 对比条形图 -->
+                <div class="lg:col-span-7 bg-navy-900 rounded-2xl p-5 border border-navy-700/80 shadow-lg flex flex-col justify-between">
+                    <!-- 4大核心测算产出数字 -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3.5 mb-5">
+                        <div class="bg-navy-950 p-3.5 rounded-xl border border-navy-800">
+                            <div class="text-xs text-slate-400">郑明动产质押垫资额</div>
+                            <div class="text-xl md:text-2xl font-extrabold text-orange-400 mt-1"><span id="res-pledge">1.60</span> 亿</div>
+                            <div class="text-[11px] text-slate-500 mt-0.5">覆盖80%收购款重任</div>
+                        </div>
+
+                        <div class="bg-navy-950 p-3.5 rounded-xl border border-navy-800">
+                            <div class="text-xs text-slate-400">脆薯厂累计释放资金</div>
+                            <div class="text-xl md:text-2xl font-extrabold text-emerald-400 mt-1"><span id="res-released">2.80</span> 亿</div>
+                            <div class="text-[11px] text-slate-500 mt-0.5">垫资+半成品买断变现</div>
+                        </div>
+
+                        <div class="bg-navy-950 p-3.5 rounded-xl border border-navy-800">
+                            <div class="text-xs text-slate-400">资金周转效率提升</div>
+                            <div class="text-xl md:text-2xl font-extrabold text-blue-400 mt-1">+300%</div>
+                            <div class="text-[11px] text-slate-500 mt-0.5">账期 60天 → 15天</div>
+                        </div>
+
+                        <div class="bg-navy-950 p-3.5 rounded-xl border border-orange-500/40">
+                            <div class="text-xs text-orange-300">郑明新增贸易与增值收益</div>
+                            <div class="text-xl md:text-2xl font-extrabold text-orange-400 mt-1"><span id="res-profit">1,020</span> 万</div>
+                            <div class="text-[11px] text-slate-400 mt-0.5">超越基础运费的新增长极</div>
+                        </div>
+                    </div>
+
+                    <!-- 可视化对比柱状图（纯CSS动态宽度动画，清晰直观） -->
+                    <div class="bg-navy-950 rounded-xl p-4 border border-navy-800 space-y-4">
+                        <h4 class="text-sm font-bold text-white">传统单一物流模式 vs 郑明四流合一模式（资金占用与收益结构对比）</h4>
+                        
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-300">脆薯公司峰值资金占压（传统模式：货款+积压库存全额自担）</span>
+                                <span class="text-red-400 font-bold"><span id="bar-trad-occupy-text">3.20</span> 亿元</span>
+                            </div>
+                            <div class="w-full bg-navy-900 h-4 rounded-lg overflow-hidden">
+                                <div id="bar-trad-occupy" class="bg-red-500/80 h-full rounded-lg transition-all duration-500" style="width: 80%"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-300">脆薯公司峰值资金占压（郑明破局模式：仅需承担20%首付，库存零积压）</span>
+                                <span class="text-emerald-400 font-bold"><span id="bar-zm-occupy-text">0.40</span> 亿元 (降幅 87.5%)</span>
+                            </div>
+                            <div class="w-full bg-navy-900 h-4 rounded-lg overflow-hidden">
+                                <div id="bar-zm-occupy" class="bg-emerald-400 h-full rounded-lg transition-all duration-500" style="width: 10%"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-300">郑明物流综合毛利构成（传统仅收基础运费 vs 叠加全权销售贸易差价）</span>
+                                <span class="text-orange-400 font-bold">总收益提升约 <span id="bar-profit-boost">2.4</span> 倍</span>
+                            </div>
+                            <div class="w-full bg-navy-900 h-4 rounded-lg overflow-hidden flex">
+                                <div class="bg-blue-500 h-full flex items-center justify-center text-[10px] font-bold text-white" style="width: 42%">基础冷链运费</div>
+                                <div id="bar-trade-profit" class="bg-orange-500 h-full flex items-center justify-center text-[10px] font-bold text-white transition-all duration-500" style="width: 58%">半成品买断购销差价 + 金融仓储费</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===================================================================== -->
+        <!-- 模块 4：课堂思考题与互动研讨墙                                          -->
+        <!-- ===================================================================== -->
+        <section id="module-4" class="module-section hidden space-y-5">
+            <!-- 顶部：课堂现场观点收集器（主持人投屏互动神器） -->
+            <div class="bg-navy-900 rounded-2xl p-5 border border-navy-700/80 shadow-lg">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                    <h2 class="text-base font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-microphone-lines text-orange-400"></i>
+                        课堂现场观点收集器（邀请同学发言，实时生成研讨卡片上墙）
+                    </h2>
+                    <button onclick="clearIdeaCards()" class="text-xs text-slate-400 hover:text-red-400 transition">
+                        <i class="fa-solid fa-trash-can mr-1"></i>清空自建卡片
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+                    <div class="md:col-span-3">
+                        <select id="idea-topic-select" class="w-full bg-navy-950 border border-navy-600 text-white text-sm rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-orange-500">
+                            <option value="1">归属：思考题 1（运输计划制定）</option>
+                            <option value="2">归属：思考题 2（物流未来方向）</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <input type="text" id="idea-author-input" placeholder="发言人/组别 (选填)" class="w-full bg-navy-950 border border-navy-600 text-white text-sm rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-orange-500">
+                    </div>
+                    <div class="md:col-span-5">
+                        <input type="text" id="idea-content-input" onkeypress="if(event.key==='Enter') addIdeaCard()" placeholder="输入台下同学的核心观点关键词，按回车或点击投屏..." class="w-full bg-navy-950 border border-navy-600 text-white text-sm rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-orange-500">
+                    </div>
+                    <div class="md:col-span-2">
+                        <button onclick="addIdeaCard()" class="w-full h-full py-2.5 px-4 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-sm shadow-lg shadow-orange-500/20 transition flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-paper-plane"></i> 投屏上墙
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 下方两列：两道思考题独立研讨区 + 可折叠复盘解析 -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                <!-- 思考题 1 -->
+                <div class="bg-navy-900 rounded-2xl border border-navy-700/80 p-5 flex flex-col justify-between shadow-lg space-y-4">
+                    <div class="space-y-4">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <span class="px-2.5 py-0.5 rounded bg-blue-500/20 text-blue-300 text-xs font-bold border border-blue-500/30">教材课后思考题 01</span>
+                                <h3 class="text-lg font-extrabold text-white mt-2">郑明物流公司是如何制定脆薯项目的运输计划的？</h3>
+                            </div>
+                        </div>
+
+                        <!-- 观点卡片展示区 1 -->
+                        <div class="space-y-2.5">
+                            <div class="text-xs font-semibold text-slate-400">现场研讨观点墙：</div>
+                            <div id="cards-topic-1" class="space-y-2.5 max-h-[220px] overflow-y-auto pr-1">
+                                <!-- 预设示例卡片 -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 折叠解析按钮与内容 -->
+                    <div class="pt-2 border-t border-navy-800">
+                        <button onclick="toggleAnalysis(1)" class="w-full py-2.5 px-4 rounded-xl bg-navy-800 hover:bg-navy-700 text-orange-400 font-bold text-sm border border-navy-600 transition flex items-center justify-between">
+                            <span><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>展开核心复盘解析（汇报总结用）</span>
+                            <i id="arrow-analysis-1" class="fa-solid fa-chevron-down transition-transform"></i>
+                        </button>
+                        <div id="analysis-box-1" class="hidden mt-3 bg-navy-950 rounded-xl p-4 border border-orange-500/40 text-xs text-slate-200 space-y-2 leading-relaxed">
+                            <p><strong class="text-orange-400">1. 物理路线重构（网状交通线分段接力）：</strong>打破传统长途直达，在路线集中区域设立中转站，一车只负责一段路线，杜绝司机疲劳，避免加工厂门口集中拥堵。</p>
+                            <p><strong class="text-orange-400">2. 质量与清点前置（多仓库分段质检）：</strong>在网状后半段设立多个仓库进行货物清点与中途质检，提前剔除破皮、糖分超标马铃薯，大幅提升入厂交货效率。</p>
+                            <p><strong class="text-orange-400">3. 数字化精准管控（T-GPS + TMS + 交易平台）：</strong>通过 T-GPS 实时回传温控与轨迹防断链；依托 TMS 统筹自有与挂靠车辆；利用物流交易系统将沿途返程空车发布至外部运力池匹配任务，彻底消灭空驶浪费。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 思考题 2 -->
+                <div class="bg-navy-900 rounded-2xl border border-navy-700/80 p-5 flex flex-col justify-between shadow-lg space-y-4">
+                    <div class="space-y-4">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <span class="px-2.5 py-0.5 rounded bg-orange-500/20 text-orange-300 text-xs font-bold border border-orange-500/30">教材课后思考题 02</span>
+                                <h3 class="text-lg font-extrabold text-white mt-2">以郑明物流公司为例，简要说明物流企业的未来发展方向？</h3>
+                            </div>
+                        </div>
+
+                        <!-- 观点卡片展示区 2 -->
+                        <div class="space-y-2.5">
+                            <div class="text-xs font-semibold text-slate-400">现场研讨观点墙：</div>
+                            <div id="cards-topic-2" class="space-y-2.5 max-h-[220px] overflow-y-auto pr-1">
+                                <!-- 预设示例卡片 -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 折叠解析按钮与内容 -->
+                    <div class="pt-2 border-t border-navy-800">
+                        <button onclick="toggleAnalysis(2)" class="w-full py-2.5 px-4 rounded-xl bg-navy-800 hover:bg-navy-700 text-orange-400 font-bold text-sm border border-navy-600 transition flex items-center justify-between">
+                            <span><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>展开核心复盘解析（汇报总结用）</span>
+                            <i id="arrow-analysis-2" class="fa-solid fa-chevron-down transition-transform"></i>
+                        </button>
+                        <div id="analysis-box-2" class="hidden mt-3 bg-navy-950 rounded-xl p-4 border border-orange-500/40 text-xs text-slate-200 space-y-2 leading-relaxed">
+                            <p><strong class="text-orange-400">1. 从“搬运箱子”向“全链条生态架构师”转型：</strong>打通从田间“最初一公里”到成品末端配送“最后一公里”的完整业务链条，实现供应链链条式协同设计。</p>
+                            <p><strong class="text-orange-400">2. 迈向“四流合一”的高端增值服务：</strong>突破单一运费收入瓶颈，向<strong>供应链金融</strong>（如动产质押垫资加速资金周转）与<strong>贸易执行</strong>（如半成品买断、全权销售赚取购销差价）深度渗透。</p>
+                            <p><strong class="text-orange-400">3. 数字化与平台化赋能：</strong>以物联网硬件（T-GPS）和算法交易平台为底座，整合社会闲置运力，从传统承运商升级为第四方供应链解决方案提供商（4PL）。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // =========================================================================
+        // 全局状态管理与导航切换
+        // =========================================================================
+        let currentTab = 1;
+        let dispatchMode = 'zhengming'; // 'zhengming' | 'traditional'
+        let dailyVolume = 3200;
+        let particles = [];
+        let animFrameId = null;
+
+        // 车辆监控模拟数据
+        let vehiclesData = [
+            {
+                id: '苏A·ZM801',
+                type: '郑明自有冷链车',
+                segment: '齐齐哈尔 → 肇东中转仓',
+                speed: 76,
+                temp: 9.4,
+                load: '32.5 吨 (优质一级)',
+                status: 'normal',
+                history: [9.8, 9.6, 9.5, 9.7, 9.3, 9.2, 9.5, 9.4, 9.3, 9.4]
+            },
+            {
+                id: '黑A·ZM312',
+                type: '郑明挂靠冷链车',
+                segment: '呼兰集散点 → 哈尔滨加工厂',
+                speed: 68,
+                temp: 10.2,
+                load: '30.0 吨 (待入厂质检)',
+                status: 'normal',
+                history: [10.0, 10.1, 10.3, 10.2, 10.4, 10.1, 10.2, 10.3, 10.1, 10.2]
+            },
+            {
+                id: '黑B·ZM905',
+                type: '外部交易池协同车',
+                segment: '大庆中转仓 → 哈尔滨加工厂',
+                speed: 82,
+                temp: 8.9,
+                load: '28.8 吨 (已通过前置质检)',
+                status: 'normal',
+                history: [9.1, 9.0, 8.9, 8.8, 9.0, 8.9, 8.8, 9.0, 8.9, 8.9]
+            }
+        ];
+        let selectedVehicleIdx = 0;
+        let isAlertActive = false;
+
+        // 思考题默认示例卡片
+        const defaultIdeas = [
+            { id: 101, topic: '1', author: '第1小组代表', text: '把长途切成短途接力，就像跑接力赛一样，司机不疲劳，土豆也不会在路上捂坏。', isPreset: true },
+            { id: 102, topic: '2', author: '第3小组代表', text: '单纯拉货利润太薄，必须像郑明这样结合金融垫资和贸易买断，掌握定价权。', isPreset: true }
+        ];
+        let ideaCards = [...defaultIdeas];
+
+        // 提示框函数
+        function showToast(msg, iconClass = 'fa-circle-check text-orange-400') {
+            const box = document.getElementById('toast-box');
+            const icon = document.getElementById('toast-icon');
+            const text = document.getElementById('toast-msg');
+            icon.className = `fa-solid ${iconClass} text-lg`;
+            text.textContent = msg;
+            box.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                box.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        // 切换顶部 Tab
+        function switchTab(tabIndex) {
+            currentTab = tabIndex;
+            document.querySelectorAll('.module-section').forEach((sec, idx) => {
+                sec.classList.toggle('hidden', idx + 1 !== tabIndex);
+            });
+            document.querySelectorAll('.tab-btn').forEach((btn, idx) => {
+                if (idx + 1 === tabIndex) {
+                    btn.className = 'tab-btn px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 bg-orange-500 text-white shadow-md whitespace-nowrap';
+                } else {
+                    btn.className = 'tab-btn px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 text-slate-300 hover:text-white whitespace-nowrap';
+                }
+            });
+
+            if (tabIndex === 1) {
+                resizeSandboxCanvas();
+            } else if (tabIndex === 2) {
+                drawTempChart();
+            }
+        }
+
+        // 全屏演示切换
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {
+                    showToast('当前浏览器环境限制自动全屏，可按 F11 进入全屏演示', 'fa-circle-info text-blue-400');
+                });
+                document.getElementById('fullscreen-text').textContent = '退出全屏';
+            } else {
+                document.exitFullscreen();
+                document.getElementById('fullscreen-text').textContent = '全屏演示';
+            }
+        }
+
+        // 重置所有模拟数据
+        function resetAllSimulations() {
+            dispatchMode = 'zhengming';
+            dailyVolume = 3200;
+            document.getElementById('volume-slider').value = 3200;
+            setDispatchMode('zhengming', false);
+
+            // 重置车辆状态
+            isAlertActive = false;
+            document.getElementById('tms-alert-banner').classList.add('hidden');
+            vehiclesData[1].temp = 10.2;
+            vehiclesData[1].status = 'normal';
+            vehiclesData[1].history = [10.0, 10.1, 10.3, 10.2, 10.4, 10.1, 10.2, 10.3, 10.1, 10.2];
+            document.getElementById('tms-role-select').value = 'group';
+            changeTmsRole(false);
+            renderVehicleList();
+            drawTempChart();
+
+            // 重置财务滑块
+            document.getElementById('fin-purchase-slider').value = 2.0;
+            document.getElementById('fin-inventory-slider').value = 1.2;
+            updateFinanceCalc();
+
+            showToast('所有沙盘仿真参数已恢复至初始演示状态');
+        }
+
+        // =========================================================================
+        // 模块 1：网状分段调度仿真沙盘逻辑
+        // =========================================================================
+        function setDispatchMode(mode, notify = true) {
+            dispatchMode = mode;
+            const btnTrad = document.getElementById('btn-mode-trad');
+            const btnZm = document.getElementById('btn-mode-zm');
+
+            if (mode === 'traditional') {
+                btnTrad.className = 'px-4 py-2 rounded-lg text-sm font-bold transition-all bg-red-600 text-white shadow';
+                btnZm.className = 'px-4 py-2 rounded-lg text-sm font-bold transition-all text-slate-400 hover:text-white';
+                document.getElementById('sandbox-subtitle').textContent = '当前策略：单车单司机长途直达，无中转缓冲，海量车辆同时涌向加工厂门口';
+                document.getElementById('sandbox-banner-text').textContent = '警告：长途直达导致司机极度疲劳、沿途无补给质检，大量车辆在工厂门口排队滞塞，鲜薯高温变质！';
+                document.getElementById('pool-status-badge').className = 'px-2 py-0.5 text-[11px] rounded bg-red-500/20 text-red-300 border border-red-500/30';
+                document.getElementById('pool-status-badge').textContent = '系统未启用 (单向空驶)';
+            } else {
+                btnZm.className = 'px-4 py-2 rounded-lg text-sm font-bold transition-all bg-orange-500 text-white shadow';
+                btnTrad.className = 'px-4 py-2 rounded-lg text-sm font-bold transition-all text-slate-400 hover:text-white';
+                document.getElementById('sandbox-subtitle').textContent = '当前策略：在路线集中局域设立中转站，一车一段接力运行，后半段多仓前置质检清点';
+                document.getElementById('sandbox-banner-text').textContent = '每段路线均有专属车辆分段接力，杜绝疲劳驾驶；中转站提前剔除破损薯，入厂清点效率提升 3.2 倍。';
+                document.getElementById('pool-status-badge').className = 'px-2 py-0.5 text-[11px] rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
+                document.getElementById('pool-status-badge').textContent = '算法实时匹配中';
+            }
+
+            updateDispatchSim();
+            initParticles();
+            if (notify) {
+                showToast(mode === 'zhengming' ? '已切换至【郑明网状分段接力调度模式】' : '已切换至【传统点对点直达模式】');
+            }
+        }
+
+        function updateDispatchSim() {
+            dailyVolume = parseInt(document.getElementById('volume-slider').value);
+            document.getElementById('volume-display').textContent = dailyVolume.toLocaleString();
+
+            const ratio = (dailyVolume - 500) / 4500; // 0 ~ 1
+            let congestion, fatigue, emptyRate, spoilage;
+
+            if (dispatchMode === 'traditional') {
+                congestion = Math.min(98, Math.round(35 + ratio * 63));
+                fatigue = Math.min(95, Math.round(48 + ratio * 47));
+                emptyRate = (42 + ratio * 16).toFixed(1);
+                spoilage = (6.5 + ratio * 11.5).toFixed(1);
+            } else {
+                congestion = Math.round(10 + ratio * 14);
+                fatigue = Math.round(15 + ratio * 10);
+                emptyRate = (8.0 + ratio * 5.5).toFixed(1);
+                spoilage = (0.8 + ratio * 1.1).toFixed(1);
+            }
+
+            updateKpiCard('congestion', congestion, '%', dispatchMode === 'traditional' ? '严重滞塞' : '畅通');
+            updateKpiCard('fatigue', fatigue, '%', dispatchMode === 'traditional' ? '高危疲劳' : '安全接力');
+            updateKpiCard('empty', emptyRate, '%', '');
+            updateKpiCard('spoilage', spoilage, '%', dispatchMode === 'traditional' ? '拒收高发' : '优质达标', spoilage * 5);
+
+            renderTradingLogs();
+        }
+
+        function updateKpiCard(key, val, unit, suffix, barWidthOverride = null) {
+            const elText = document.getElementById(`kpi-${key}`);
+            const elBar = document.getElementById(`bar-${key}`);
+            const isBad = dispatchMode === 'traditional';
+
+            elText.textContent = `${val}${unit}${suffix ? ' (' + suffix + ')' : ''}`;
+            elText.className = `text-xl md:text-2xl font-extrabold mt-1.5 ${isBad ? 'text-red-400' : 'text-emerald-400'}`;
+            elBar.className = `h-full transition-all duration-500 ${isBad ? 'bg-red-500' : 'bg-emerald-400'}`;
+            elBar.style.width = `${Math.min(100, barWidthOverride !== null ? barWidthOverride : val)}%`;
+        }
+
+        function renderTradingLogs() {
+            const container = document.getElementById('trading-log-list');
+            if (dispatchMode === 'traditional') {
+                container.innerHTML = `
+                    <div class="p-2.5 rounded-lg bg-red-950/50 border border-red-800/60 text-red-200">
+                        <div class="font-bold"><i class="fa-solid fa-circle-xmark mr-1"></i> 返程运力闲置浪费</div>
+                        <div class="text-slate-400 mt-0.5">单向长途直达哈尔滨后，92%社会车辆空车返程，单趟运费成本居高不下。</div>
+                    </div>
+                    <div class="p-2.5 rounded-lg bg-red-950/50 border border-red-800/60 text-red-200">
+                        <div class="font-bold"><i class="fa-solid fa-circle-xmark mr-1"></i> 工厂大门排长龙</div>
+                        <div class="text-slate-400 mt-0.5">当前 ${dailyVolume} 吨运量集中涌入，清点交接耗时超 6 小时，车厢内积热严重。</div>
+                    </div>
+                `;
+                return;
+            }
+
+            const logs = [
+                { time: '刚刚', plate: '黑A·ZM312', desc: '完成肇东中转站接力卸货，交易系统自动匹配【哈尔滨→齐齐哈尔】冷链乳品返程单，消除空驶。' },
+                { time: '1分钟前', plate: '黑B·ZM905', desc: '大庆前置仓完成马铃薯糖分/淀粉抽检并剔除破损品，放行进入加工厂绿色通道。' },
+                { time: '3分钟前', plate: '外部运力·辽A772', desc: '检测到8月收割峰值（' + dailyVolume + '吨/日），自动调用外部运力池 14 辆冷链车补位支线短驳。' },
+                { time: '5分钟前', plate: '苏A·ZM801', desc: '按“一车一段”规则于呼兰中转站完成挂厢交接，司机准点轮休，疲劳指数归零。' }
+            ];
+
+            container.innerHTML = logs.map(item => `
+                <div class="p-2.5 rounded-lg bg-navy-950 border border-navy-800 hover:border-orange-500/40 transition">
+                    <div class="flex justify-between text-[11px] text-orange-400 font-semibold">
+                        <span><i class="fa-solid fa-bolt mr-1"></i>${item.plate}</span>
+                        <span class="text-slate-500">${item.time}</span>
+                    </div>
+                    <div class="text-slate-300 mt-1 leading-snug">${item.desc}</div>
+                </div>
+            `).join('');
+        }
+
+        // Canvas 沙盘动画绘制
+        const sandboxCanvas = document.getElementById('dispatch-canvas');
+        const sCtx = sandboxCanvas.getContext('2d');
+
+        function resizeSandboxCanvas() {
+            const container = document.getElementById('sandbox-canvas-container');
+            if (!container) return;
+            sandboxCanvas.width = container.clientWidth;
+            sandboxCanvas.height = container.clientHeight;
+            initParticles();
+        }
+
+        function getNodes(w, h) {
+            return {
+                qqhr: { x: w * 0.14, y: h * 0.28, label: '齐齐哈尔基地', sub: '鲜薯主产区' },
+                hrbOrigin: { x: w * 0.14, y: h * 0.72, label: '哈尔滨周边基地', sub: '鲜薯主产区' },
+                hub1: { x: w * 0.45, y: h * 0.25, label: '肇东中转仓', sub: '分段接力/前置质检' },
+                hub2: { x: w * 0.45, y: h * 0.50, label: '大庆中心中转站', sub: '运力交易池调配枢纽' },
+                hub3: { x: w * 0.45, y: h * 0.75, label: '呼兰前置分拣仓', sub: '剔除破损/高效清点' },
+                factory: { x: w * 0.84, y: h * 0.50, label: '脆薯食品加工厂', sub: '麦当劳/肯德基供应链' }
+            };
+        }
+
+        function initParticles() {
+            const w = sandboxCanvas.width || 800;
+            const h = sandboxCanvas.height || 400;
+            const nodes = getNodes(w, h);
+            particles = [];
+
+            const count = Math.max(12, Math.round(dailyVolume / 160));
+            const routes = dispatchMode === 'traditional'
+                ? [
+                    [nodes.qqhr, nodes.factory],
+                    [nodes.hrbOrigin, nodes.factory]
+                ]
+                : [
+                    [nodes.qqhr, nodes.hub1],
+                    [nodes.qqhr, nodes.hub2],
+                    [nodes.hrbOrigin, nodes.hub2],
+                    [nodes.hrbOrigin, nodes.hub3],
+                    [nodes.hub1, nodes.factory],
+                    [nodes.hub2, nodes.factory],
+                    [nodes.hub3, nodes.factory]
+                ];
+
+            for (let i = 0; i < count; i++) {
+                const r = routes[i % routes.length];
+                particles.push({
+                    from: r[0],
+                    to: r[1],
+                    progress: Math.random(),
+                    speed: (dispatchMode === 'traditional' ? 0.0025 : 0.006) + Math.random() * 0.003,
+                    isReturnPool: dispatchMode === 'zhengming' && i % 3 === 0
+                });
+            }
+        }
+
+        function animateSandbox() {
+            if (currentTab === 1 && sandboxCanvas.width > 0) {
+                const w = sandboxCanvas.width;
+                const h = sandboxCanvas.height;
+                const nodes = getNodes(w, h);
+
+                sCtx.clearRect(0, 0, w, h);
+
+                // 绘制背景网格线
+                sCtx.strokeStyle = 'rgba(30, 70, 125, 0.25)';
+                sCtx.lineWidth = 1;
+                for (let x = 0; x < w; x += 40) {
+                    sCtx.beginPath(); sCtx.moveTo(x, 0); sCtx.lineTo(x, h); sCtx.stroke();
+                }
+                for (let y = 0; y < h; y += 40) {
+                    sCtx.beginPath(); sCtx.moveTo(0, y); sCtx.lineTo(w, y); sCtx.stroke();
+                }
+
+                // 绘制连接路线
+                if (dispatchMode === 'traditional') {
+                    drawLine(nodes.qqhr, nodes.factory, '#ef4444', 4, [8, 6]);
+                    drawLine(nodes.hrbOrigin, nodes.factory, '#ef4444', 4, [8, 6]);
+                } else {
+                    const meshPairs = [
+                        [nodes.qqhr, nodes.hub1], [nodes.qqhr, nodes.hub2],
+                        [nodes.hrbOrigin, nodes.hub2], [nodes.hrbOrigin, nodes.hub3],
+                        [nodes.hub1, nodes.hub2], [nodes.hub2, nodes.hub3],
+                        [nodes.hub1, nodes.factory], [nodes.hub2, nodes.factory], [nodes.hub3, nodes.factory]
+                    ];
+                    meshPairs.forEach(pair => drawLine(pair[0], pair[1], '#3b82f6', 2.5, []));
+                }
+
+                // 绘制流动车辆粒子
+                particles.forEach(p => {
+                    p.progress += p.speed;
+                    if (p.progress > 1) p.progress = 0;
+
+                    const px = p.from.x + (p.to.x - p.from.x) * p.progress;
+                    const py = p.from.y + (p.to.y - p.from.y) * p.progress;
+
+                    sCtx.beginPath();
+                    sCtx.arc(px, py, 5, 0, Math.PI * 2);
+                    if (dispatchMode === 'traditional') {
+                        sCtx.fillStyle = '#ef4444';
+                    } else {
+                        sCtx.fillStyle = p.isReturnPool ? '#EA6A1F' : '#34d399';
+                    }
+                    sCtx.fill();
+                });
+
+                // 绘制节点
+                drawNode(nodes.qqhr, '#10b981', true);
+                drawNode(nodes.hrbOrigin, '#10b981', true);
+
+                if (dispatchMode === 'zhengming') {
+                    drawNode(nodes.hub1, '#3b82f6', true);
+                    drawNode(nodes.hub2, '#EA6A1F', true);
+                    drawNode(nodes.hub3, '#3b82f6', true);
+                } else {
+                    drawNode(nodes.hub1, '#475569', false);
+                    drawNode(nodes.hub2, '#475569', false);
+                    drawNode(nodes.hub3, '#475569', false);
+                }
+
+                drawNode(nodes.factory, dispatchMode === 'traditional' ? '#ef4444' : '#EA6A1F', true, true);
+            }
+            animFrameId = requestAnimationFrame(animateSandbox);
+        }
+
+        function drawLine(n1, n2, color, width, dash) {
+            sCtx.save();
+            sCtx.strokeStyle = color;
+            sCtx.lineWidth = width;
+            sCtx.setLineDash(dash);
+            sCtx.beginPath();
+            sCtx.moveTo(n1.x, n1.y);
+            sCtx.lineTo(n2.x, n2.y);
+            sCtx.stroke();
+            sCtx.restore();
+        }
+
+        function drawNode(node, color, active, isLarge = false) {
+            const r = isLarge ? 22 : 16;
+            sCtx.save();
+            // 外圈光晕
+            if (active) {
+                sCtx.beginPath();
+                sCtx.arc(node.x, node.y, r + 6, 0, Math.PI * 2);
+                sCtx.fillStyle = color + '33';
+                sCtx.fill();
+            }
+            // 主圆
+            sCtx.beginPath();
+            sCtx.arc(node.x, node.y, r, 0, Math.PI * 2);
+            sCtx.fillStyle = '#0F2544';
+            sCtx.fill();
+            sCtx.lineWidth = 3;
+            sCtx.strokeStyle = color;
+            sCtx.stroke();
+
+            // 文字标签
+            sCtx.fillStyle = active ? '#FFFFFF' : '#64748B';
+            sCtx.font = 'bold 13px Inter, sans-serif';
+            sCtx.textAlign = 'center';
+            sCtx.fillText(node.label, node.x, node.y + r + 18);
+
+            sCtx.fillStyle = active ? '#94A3B8' : '#475569';
+            sCtx.font = '11px Inter, sans-serif';
+            sCtx.fillText(active ? node.sub : '(未启用中转)', node.x, node.y + r + 33);
+            sCtx.restore();
+        }
+
+        // =========================================================================
+        // 模块 2：T-GPS温控与运输管理系统 (TMS) 逻辑
+        // =========================================================================
+        function changeTmsRole(notify = true) {
+            const role = document.getElementById('tms-role-select').value;
+            const tag = document.getElementById('role-permission-tag');
+            const notice = document.getElementById('tms-action-notice');
+            const btnDispatch = document.getElementById('btn-group-dispatch');
+            const btnPublish = document.getElementById('btn-group-publish');
+
+            if (role === 'group') {
+                tag.className = 'text-xs px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30';
+                tag.textContent = '当前权限：全网车辆动态调配 + 外部运力发布 + 异常强行接管';
+                notice.textContent = '集团级权限已解锁全部调度指令';
+                notice.className = 'text-xs text-emerald-400';
+                btnDispatch.disabled = false;
+                btnPublish.disabled = false;
+                btnDispatch.classList.remove('opacity-40', 'cursor-not-allowed');
+                btnPublish.classList.remove('opacity-40', 'cursor-not-allowed');
+            } else {
+                tag.className = 'text-xs px-3 py-1 rounded-full bg-slate-700 text-slate-300 border border-slate-600';
+                tag.textContent = '当前权限：仅限单线路监控与基础信息录入（跨区调配受限）';
+                notice.textContent = '企业级操作员视图：部分集团级统筹按钮已锁定';
+                notice.className = 'text-xs text-amber-400';
+                btnDispatch.disabled = true;
+                btnPublish.disabled = true;
+                btnDispatch.classList.add('opacity-40', 'cursor-not-allowed');
+                btnPublish.classList.add('opacity-40', 'cursor-not-allowed');
+            }
+            if (notify) showToast(`已切换至【${role === 'group' ? '集团级管理员' : '企业级操作员'}】权限视图`);
+        }
+
+        function renderVehicleList() {
+            const container = document.getElementById('vehicle-list');
+            container.innerHTML = vehiclesData.map((v, idx) => {
+                const isSelected = idx === selectedVehicleIdx;
+                const isDanger = v.status === 'danger';
+                return `
+                    <div onclick="selectVehicle(${idx})" class="p-3.5 rounded-xl border transition cursor-pointer ${
+                        isDanger
+                            ? 'bg-red-950/60 border-red-500 alert-active'
+                            : isSelected
+                                ? 'bg-navy-800 border-orange-500 shadow-md'
+                                : 'bg-navy-950 border-navy-800 hover:border-navy-600'
+                    }">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="font-extrabold text-sm text-white">${v.id}</span>
+                                <span class="text-[11px] px-2 py-0.5 rounded bg-navy-900 text-slate-300 border border-navy-700">${v.type}</span>
+                            </div>
+                            <span class="text-sm font-extrabold ${isDanger ? 'text-red-400' : 'text-emerald-400'}">
+                                ${v.temp.toFixed(1)} ℃
+                            </span>
+                        </div>
+                        <div class="flex items-center justify-between text-xs text-slate-400 mt-2">
+                            <span><i class="fa-solid fa-location-dot text-orange-400 mr-1"></i>${v.segment}</span>
+                            <span>${isDanger ? '<strong class="text-red-400">温度超标报警！</strong>' : '淀粉/糖分正常'}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            updateSelectedVehicleDetails();
+        }
+
+        function selectVehicle(idx) {
+            selectedVehicleIdx = idx;
+            renderVehicleList();
+            drawTempChart();
+        }
+
+        function updateSelectedVehicleDetails() {
+            const v = vehiclesData[selectedVehicleIdx];
+            document.getElementById('selected-plate').textContent = v.id;
+            document.getElementById('selected-speed').textContent = `${v.speed} km/h`;
+            const tempEl = document.getElementById('selected-temp');
+            tempEl.textContent = `${v.temp.toFixed(1)} ℃`;
+            tempEl.className = v.status === 'danger' ? 'text-red-400 font-extrabold' : '';
+
+            document.getElementById('veh-type').textContent = v.type;
+            document.getElementById('veh-segment').textContent = v.segment;
+            document.getElementById('veh-load').textContent = v.load;
+        }
+
+        function triggerHighTempAlert() {
+            isAlertActive = true;
+            selectedVehicleIdx = 1; // 选中黑A·ZM312
+            vehiclesData[1].temp = 16.8;
+            vehiclesData[1].status = 'danger';
+            vehiclesData[1].history = [10.1, 10.3, 10.8, 11.9, 13.4, 14.9, 15.8, 16.4, 16.8, 16.8];
+
+            document.getElementById('tms-alert-banner').classList.remove('hidden');
+            renderVehicleList();
+            drawTempChart();
+            showToast('警报：T-GPS 监测到黑A·ZM312车厢超温，已触发自动拦截！', 'fa-triangle-exclamation text-red-400');
+        }
+
+        function resolveHighTempAlert() {
+            isAlertActive = false;
+            vehiclesData[1].temp = 9.6;
+            vehiclesData[1].status = 'normal';
+            vehiclesData[1].segment = '呼兰中转仓 (已完成接驳换车)';
+            vehiclesData[1].history = [16.8, 15.2, 13.0, 11.2, 10.1, 9.8, 9.6, 9.6, 9.5, 9.6];
+
+            document.getElementById('tms-alert-banner').classList.add('hidden');
+            renderVehicleList();
+            drawTempChart();
+            showToast('处置成功：已于呼兰中转站完成前置质检并启用备用冷链车接驳，鲜薯零损失！', 'fa-shield-check text-emerald-400');
+        }
+
+        function tmsAction(actionName) {
+            showToast(`TMS系统指令已执行：【${actionName}】`);
+        }
+
+        function drawTempChart() {
+            const canvas = document.getElementById('temp-chart-canvas');
+            if (!canvas || !canvas.parentElement) return;
+            canvas.width = canvas.parentElement.clientWidth - 16;
+            canvas.height = canvas.parentElement.clientHeight - 16;
+
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+            const v = vehiclesData[selectedVehicleIdx];
+            const data = v.history;
+
+            ctx.clearRect(0, 0, w, h);
+
+            const padL = 42, padR = 20, padT = 20, padB = 28;
+            const plotW = w - padL - padR;
+            const plotH = h - padT - padB;
+            const minT = 6, maxT = 18;
+
+            const getY = (temp) => padT + plotH - ((temp - minT) / (maxT - minT)) * plotH;
+
+            // 绘制 8~12℃ 黄金保鲜安全区间带
+            const y12 = getY(12);
+            const y8 = getY(8);
+            ctx.fillStyle = 'rgba(16, 185, 129, 0.12)';
+            ctx.fillRect(padL, y12, plotW, y8 - y12);
+
+            // 警戒线 12℃
+            ctx.strokeStyle = '#ef4444';
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath(); ctx.moveTo(padL, y12); ctx.lineTo(w - padR, y12); ctx.stroke();
+            ctx.setLineDash([]);
+
+            ctx.fillStyle = '#fca5a5';
+            ctx.font = '11px Inter, sans-serif';
+            ctx.fillText('高温警戒线 12.0℃', padL + 8, y12 - 5);
+
+            // Y轴刻度
+            ctx.fillStyle = '#94A3B8';
+            ctx.textAlign = 'right';
+            [6, 8, 10, 12, 14, 16, 18].forEach(t => {
+                const y = getY(t);
+                ctx.fillText(t + '℃', padL - 6, y + 4);
+                ctx.strokeStyle = 'rgba(30, 70, 125, 0.3)';
+                ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(w - padR, y); ctx.stroke();
+            });
+
+            // 绘制温度折线
+            ctx.strokeStyle = v.status === 'danger' ? '#ef4444' : '#EA6A1F';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            data.forEach((val, i) => {
+                const x = padL + (i / (data.length - 1)) * plotW;
+                const y = getY(val);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+
+            // 数据点与时间标签
+            ctx.textAlign = 'center';
+            data.forEach((val, i) => {
+                const x = padL + (i / (data.length - 1)) * plotW;
+                const y = getY(val);
+                ctx.beginPath();
+                ctx.arc(x, y, 4.5, 0, Math.PI * 2);
+                ctx.fillStyle = val > 12 ? '#ef4444' : '#FFFFFF';
+                ctx.fill();
+
+                ctx.fillStyle = '#64748B';
+                ctx.fillText(`-${(data.length - 1 - i) * 5}m`, x, h - 8);
+            });
+        }
+
+        // =========================================================================
+        // 模块 3：动产质押与全权销售资金流测算器逻辑
+        // =========================================================================
+        function updateFinanceCalc() {
+            const purchase = parseFloat(document.getElementById('fin-purchase-slider').value);
+            const inventory = parseFloat(document.getElementById('fin-inventory-slider').value);
+
+            document.getElementById('fin-purchase-val').textContent = purchase.toFixed(2);
+            document.getElementById('fin-inventory-val').textContent = inventory.toFixed(2);
+
+            const pledgeAmount = purchase * 0.80; // 郑明承揽80%货款
+            const totalReleased = pledgeAmount + inventory; // 垫资 + 买断库存释放
+            const zmTradeProfit = Math.round(inventory * 10000 * 0.085); // 8.5%综合差价与仓储增值（万元）
+
+            document.getElementById('res-pledge').textContent = pledgeAmount.toFixed(2);
+            document.getElementById('res-released').textContent = totalReleased.toFixed(2);
+            document.getElementById('res-profit').textContent = zmTradeProfit.toLocaleString();
+
+            // 对比条形图更新
+            const tradOccupy = purchase + inventory;
+            const zmOccupy = purchase * 0.20;
+            document.getElementById('bar-trad-occupy-text').textContent = tradOccupy.toFixed(2);
+            document.getElementById('bar-zm-occupy-text').textContent = zmOccupy.toFixed(2);
+
+            const maxScale = 8.0;
+            document.getElementById('bar-trad-occupy').style.width = `${Math.min(100, (tradOccupy / maxScale) * 100)}%`;
+            document.getElementById('bar-zm-occupy').style.width = `${Math.max(5, (zmOccupy / maxScale) * 100)}%`;
+
+            const boostRatio = (1 + (inventory / purchase) * 2.3).toFixed(1);
+            document.getElementById('bar-profit-boost').textContent = boostRatio;
+        }
+
+        // =========================================================================
+        // 模块 4：课堂思考题与互动研讨墙逻辑
+        // =========================================================================
+        function renderIdeaCards() {
+            [1, 2].forEach(topicNum => {
+                const container = document.getElementById(`cards-topic-${topicNum}`);
+                const filtered = ideaCards.filter(c => c.topic === String(topicNum));
+
+                if (filtered.length === 0) {
+                    container.innerHTML = `<div class="text-xs text-slate-500 italic py-4 text-center border border-dashed border-navy-700 rounded-xl">暂无观点卡片，请在上方输入框录入同学发言上墙</div>`;
+                    return;
+                }
+
+                container.innerHTML = filtered.map(card => `
+                    <div class="bg-navy-950 p-3 rounded-xl border ${card.isPreset ? 'border-navy-700' : 'border-orange-500/50'} flex items-start justify-between gap-2.5 transition">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-bold ${card.isPreset ? 'text-blue-400' : 'text-orange-400'}">
+                                    <i class="fa-solid fa-user-graduate mr-1"></i>${card.author || '现场同学'}
+                                </span>
+                                ${card.isPreset ? '<span class="text-[10px] px-1.5 py-0.2 bg-navy-800 text-slate-400 rounded">引导示例</span>' : '<span class="text-[10px] px-1.5 py-0.2 bg-orange-500/20 text-orange-300 rounded">现场新收录</span>'}
+                            </div>
+                            <p class="text-xs text-slate-200 mt-1 leading-relaxed">${card.text}</p>
+                        </div>
+                        <button onclick="deleteIdeaCard(${card.id})" class="text-slate-500 hover:text-red-400 text-xs p-1" title="移除此卡片">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                `).join('');
+            });
+        }
+
+        function addIdeaCard() {
+            const topic = document.getElementById('idea-topic-select').value;
+            const authorInput = document.getElementById('idea-author-input');
+            const contentInput = document.getElementById('idea-content-input');
+            const text = contentInput.value.trim();
+
+            if (!text) {
+                showToast('请先输入同学的发言观点内容！', 'fa-circle-exclamation text-amber-400');
+                return;
+            }
+
+            ideaCards.unshift({
+                id: Date.now(),
+                topic: topic,
+                author: authorInput.value.trim() || '现场同学',
+                text: text,
+                isPreset: false
+            });
+
+            contentInput.value = '';
+            renderIdeaCards();
+            showToast(`观点已成功投屏至【思考题 ${topic}】研讨墙！`);
+        }
+
+        function deleteIdeaCard(id) {
+            ideaCards = ideaCards.filter(c => c.id !== id);
+            renderIdeaCards();
+        }
+
+        function clearIdeaCards() {
+            ideaCards = [...defaultIdeas];
+            renderIdeaCards();
+            showToast('已清空自建观点卡片，保留示例卡片');
+        }
+
+        function toggleAnalysis(num) {
+            const box = document.getElementById(`analysis-box-${num}`);
+            const arrow = document.getElementById(`arrow-analysis-${num}`);
+            const isHidden = box.classList.contains('hidden');
+            box.classList.toggle('hidden', !isHidden);
+            arrow.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+        }
+
+        // =========================================================================
+        // 页面初始化
+        // =========================================================================
+        window.addEventListener('resize', () => {
+            if (currentTab === 1) resizeSandboxCanvas();
+            if (currentTab === 2) drawTempChart();
+        });
+
+        window.onload = function () {
+            resizeSandboxCanvas();
+            updateDispatchSim();
+            animateSandbox();
+
+            renderVehicleList();
+            updateFinanceCalc();
+            renderIdeaCards();
+        };
+    </script>
+</body>
+</html>
