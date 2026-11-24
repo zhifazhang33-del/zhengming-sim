@@ -70,6 +70,25 @@
         .alert-active {
             animation: pulseAlert 1.5s infinite;
         }
+        /* 小组跳转高亮脉冲动画 */
+        @keyframes jumpHighlight {
+            0% { box-shadow: 0 0 0 0 rgba(234, 106, 31, 0.85); border-color: #EA6A1F; }
+            50% { box-shadow: 0 0 28px 6px rgba(234, 106, 31, 0.45); border-color: #F58542; }
+            100% { box-shadow: 0 0 0 0 rgba(234, 106, 31, 0); }
+        }
+        .jump-highlight {
+            animation: jumpHighlight 1.6s ease-out;
+            border-color: #EA6A1F !important;
+        }
+        .group-anchor {
+            scroll-margin-top: 185px;
+        }
+        .question-anchor {
+            scroll-margin-top: 195px;
+        }
+        html {
+            scroll-behavior: smooth;
+        }
         /* 自定义滚动条 */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #0F2544; }
@@ -580,106 +599,189 @@
         </section>
 
         <!-- ===================================================================== -->
-        <!-- 模块 4：课堂思考题与互动研讨墙                                          -->
+        <!-- 模块 4：课堂思考题与各小组提问研讨墙                                    -->
         <!-- ===================================================================== -->
-        <section id="module-4" class="module-section hidden space-y-5">
-            <!-- 顶部：课堂现场观点收集器（主持人投屏互动神器） -->
-            <div class="bg-navy-900 rounded-2xl p-5 border border-navy-700/80 shadow-lg">
-                <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-                    <h2 class="text-base font-bold text-white flex items-center gap-2">
-                        <i class="fa-solid fa-microphone-lines text-orange-400"></i>
-                        课堂现场观点收集器（邀请同学发言，实时生成研讨卡片上墙）
+        <section id="module-4" class="module-section hidden space-y-5 select-text">
+            <!-- 顶部总览说明与视图控制栏 -->
+            <div class="bg-gradient-to-r from-navy-900 via-navy-900 to-navy-800 rounded-2xl p-5 border border-navy-700/80 shadow-lg flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <div class="flex flex-wrap items-center gap-2.5">
+                        <span class="px-2.5 py-0.5 rounded-full bg-orange-500/20 text-orange-400 text-xs font-bold border border-orange-500/40">
+                            <i class="fa-solid fa-layer-group mr-1"></i>案例2 · 郑明物流的脆薯项目运输
+                        </span>
+                        <span class="px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 text-xs font-semibold border border-blue-500/30">
+                            已收录 9 个小组 · 18 道案例提问 + 2 道教材思考题
+                        </span>
+                    </div>
+                    <h2 class="text-lg md:text-xl font-extrabold text-white mt-2 flex items-center gap-2">
+                        <i class="fa-solid fa-comments text-orange-400"></i>
+                        课堂思考题研讨墙与各小组提问答辩专区
                     </h2>
-                    <button onclick="clearIdeaCards()" class="text-xs text-slate-400 hover:text-red-400 transition">
-                        <i class="fa-solid fa-trash-can mr-1"></i>清空自建卡片
-                    </button>
+                    <p class="text-xs text-slate-400 mt-1">
+                        依据教材《物流与供应链前沿案例》案例2背景与举措逐题作答，点击下方小组按钮即可一键跳转至对应小组提问与解析
+                    </p>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
-                    <div class="md:col-span-3">
-                        <select id="idea-topic-select" class="w-full bg-navy-950 border border-navy-600 text-white text-sm rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-orange-500">
-                            <option value="1">归属：思考题 1（运输计划制定）</option>
-                            <option value="2">归属：思考题 2（物流未来方向）</option>
-                        </select>
-                    </div>
-                    <div class="md:col-span-2">
-                        <input type="text" id="idea-author-input" placeholder="发言人/组别 (选填)" class="w-full bg-navy-950 border border-navy-600 text-white text-sm rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-orange-500">
-                    </div>
-                    <div class="md:col-span-5">
-                        <input type="text" id="idea-content-input" onkeypress="if(event.key==='Enter') addIdeaCard()" placeholder="输入台下同学的核心观点关键词，按回车或点击投屏..." class="w-full bg-navy-950 border border-navy-600 text-white text-sm rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-orange-500">
-                    </div>
-                    <div class="md:col-span-2">
-                        <button onclick="addIdeaCard()" class="w-full h-full py-2.5 px-4 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-sm shadow-lg shadow-orange-500/20 transition flex items-center justify-center gap-1.5">
-                            <i class="fa-solid fa-paper-plane"></i> 投屏上墙
+                <!-- 右侧视图模式与答案显隐控制 -->
+                <div class="flex flex-wrap items-center gap-2.5">
+                    <div class="inline-flex rounded-xl bg-navy-950 p-1 border border-navy-700">
+                        <button onclick="setQaViewMode('all')" id="btn-qa-view-all" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-orange-500 text-white shadow">
+                            <i class="fa-solid fa-table-cells-large mr-1"></i>全组平铺总览
+                        </button>
+                        <button onclick="setQaViewMode('focus')" id="btn-qa-view-focus" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white">
+                            <i class="fa-solid fa-tv mr-1"></i>单组聚焦投屏
                         </button>
                     </div>
+                    <button onclick="toggleAllGroupAnswers()" id="btn-toggle-all-answers" class="px-3.5 py-2 rounded-xl bg-navy-800 hover:bg-navy-700 text-slate-200 text-xs font-semibold border border-navy-600 transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-eye-slash text-orange-400"></i> <span>收起全部解答</span>
+                    </button>
                 </div>
             </div>
 
-            <!-- 下方两列：两道思考题独立研讨区 + 可折叠复盘解析 -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                <!-- 思考题 1 -->
-                <div class="bg-navy-900 rounded-2xl border border-navy-700/80 p-5 flex flex-col justify-between shadow-lg space-y-4">
-                    <div class="space-y-4">
-                        <div class="flex items-start justify-between gap-3">
-                            <div>
-                                <span class="px-2.5 py-0.5 rounded bg-blue-500/20 text-blue-300 text-xs font-bold border border-blue-500/30">教材课后思考题 01</span>
-                                <h3 class="text-lg font-extrabold text-white mt-2">郑明物流公司是如何制定脆薯项目的运输计划的？</h3>
-                            </div>
-                        </div>
+            <!-- 粘性小组问题快速跳转导航栏 -->
+            <div class="sticky top-[74px] z-40 bg-navy-950/95 backdrop-blur-md rounded-2xl p-3.5 border border-navy-700/90 shadow-2xl space-y-2.5">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <div class="text-xs font-bold text-orange-400 flex items-center gap-1.5">
+                        <i class="fa-solid fa-compass"></i>
+                        各小组问题快速跳转导航（点击组别直达对应提问与解答）：
+                    </div>
+                    <div class="flex items-center gap-2 text-[11px] text-slate-400">
+                        <span id="qa-active-indicator" class="px-2 py-0.5 rounded bg-navy-900 border border-navy-700 text-slate-300">当前：全部小组总览 (9组)</span>
+                    </div>
+                </div>
+                <div id="group-jump-bar" class="flex flex-wrap items-center gap-2">
+                    <!-- JS 动态渲染：全部小组 + 第3~12组 + 教材思考题 + 现场观点墙 -->
+                </div>
+            </div>
 
-                        <!-- 观点卡片展示区 1 -->
-                        <div class="space-y-2.5">
-                            <div class="text-xs font-semibold text-slate-400">现场研讨观点墙：</div>
-                            <div id="cards-topic-1" class="space-y-2.5 max-h-[220px] overflow-y-auto pr-1">
-                                <!-- 预设示例卡片 -->
-                            </div>
-                        </div>
+            <!-- 各小组提问与案例解答主展示区 -->
+            <div id="group-qa-container" class="space-y-5">
+                <!-- JS 动态渲染 9 个小组卡片（支持全组平铺与单组聚焦投屏模式） -->
+            </div>
+
+            <!-- 单组聚焦模式底部切换条（仅在聚焦模式显示） -->
+            <div id="focus-nav-bar" class="hidden bg-navy-900 rounded-2xl p-4 border border-navy-700/80 shadow-lg flex flex-wrap items-center justify-between gap-3">
+                <button onclick="navigateFocusGroup(-1)" id="btn-prev-group" class="px-4 py-2 rounded-xl bg-navy-800 hover:bg-navy-700 text-white text-xs font-bold border border-navy-600 transition flex items-center gap-2">
+                    <i class="fa-solid fa-arrow-left text-orange-400"></i> <span>上一组</span>
+                </button>
+                <div class="text-xs text-slate-300 font-medium">
+                    当前聚焦：<strong id="focus-current-label" class="text-orange-400">第3组</strong>
+                    <span class="text-slate-500 mx-2">|</span>
+                    <button onclick="setQaViewMode('all')" class="text-blue-400 hover:underline">返回全部小组总览</button>
+                </div>
+                <button onclick="navigateFocusGroup(1)" id="btn-next-group" class="px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold shadow transition flex items-center gap-2">
+                    <span>下一组</span> <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+
+            <!-- 教材课后思考题区域（保留并支持顶部跳转直达） -->
+            <div id="textbook-section" class="group-anchor space-y-4 pt-2">
+                <div class="flex flex-wrap items-center justify-between gap-2 border-b border-navy-800 pb-2.5">
+                    <h3 class="text-base font-extrabold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-book-open text-orange-400"></i>
+                        教材课后思考题复盘与现场研讨区
+                    </h3>
+                    <span class="text-xs text-slate-400">对应教材 P008 课后思考题（支持下方现场发言投屏上墙）</span>
+                </div>
+
+                <!-- 课堂现场观点收集器（主持人投屏互动神器） -->
+                <div id="live-wall-section" class="group-anchor bg-navy-900 rounded-2xl p-5 border border-navy-700/80 shadow-lg">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                        <h4 class="text-sm font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-microphone-lines text-orange-400"></i>
+                            课堂现场观点收集器（邀请同学补充发言，实时生成研讨卡片上墙）
+                        </h4>
+                        <button onclick="clearIdeaCards()" class="text-xs text-slate-400 hover:text-red-400 transition">
+                            <i class="fa-solid fa-trash-can mr-1"></i>清空自建卡片
+                        </button>
                     </div>
 
-                    <!-- 折叠解析按钮与内容 -->
-                    <div class="pt-2 border-t border-navy-800">
-                        <button onclick="toggleAnalysis(1)" class="w-full py-2.5 px-4 rounded-xl bg-navy-800 hover:bg-navy-700 text-orange-400 font-bold text-sm border border-navy-600 transition flex items-center justify-between">
-                            <span><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>展开核心复盘解析（汇报总结用）</span>
-                            <i id="arrow-analysis-1" class="fa-solid fa-chevron-down transition-transform"></i>
-                        </button>
-                        <div id="analysis-box-1" class="hidden mt-3 bg-navy-950 rounded-xl p-4 border border-orange-500/40 text-xs text-slate-200 space-y-2 leading-relaxed">
-                            <p><strong class="text-orange-400">1. 物理路线重构（网状交通线分段接力）：</strong>打破传统长途直达，在路线集中区域设立中转站，一车只负责一段路线，杜绝司机疲劳，避免加工厂门口集中拥堵。</p>
-                            <p><strong class="text-orange-400">2. 质量与清点前置（多仓库分段质检）：</strong>在网状后半段设立多个仓库进行货物清点与中途质检，提前剔除破皮、糖分超标马铃薯，大幅提升入厂交货效率。</p>
-                            <p><strong class="text-orange-400">3. 数字化精准管控（T-GPS + TMS + 交易平台）：</strong>通过 T-GPS 实时回传温控与轨迹防断链；依托 TMS 统筹自有与挂靠车辆；利用物流交易系统将沿途返程空车发布至外部运力池匹配任务，彻底消灭空驶浪费。</p>
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+                        <div class="md:col-span-3">
+                            <select id="idea-topic-select" class="w-full bg-navy-950 border border-navy-600 text-white text-sm rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-orange-500">
+                                <option value="1">归属：教材思考题 1（运输计划制定）</option>
+                                <option value="2">归属：教材思考题 2（物流未来方向）</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-2">
+                            <input type="text" id="idea-author-input" placeholder="发言人/组别 (选填)" class="w-full bg-navy-950 border border-navy-600 text-white text-sm rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-orange-500">
+                        </div>
+                        <div class="md:col-span-5">
+                            <input type="text" id="idea-content-input" onkeypress="if(event.key==='Enter') addIdeaCard()" placeholder="输入台下同学的核心观点关键词，按回车或点击投屏..." class="w-full bg-navy-950 border border-navy-600 text-white text-sm rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-orange-500">
+                        </div>
+                        <div class="md:col-span-2">
+                            <button onclick="addIdeaCard()" class="w-full h-full py-2.5 px-4 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-sm shadow-lg shadow-orange-500/20 transition flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-paper-plane"></i> 投屏上墙
+                            </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- 思考题 2 -->
-                <div class="bg-navy-900 rounded-2xl border border-navy-700/80 p-5 flex flex-col justify-between shadow-lg space-y-4">
-                    <div class="space-y-4">
-                        <div class="flex items-start justify-between gap-3">
-                            <div>
-                                <span class="px-2.5 py-0.5 rounded bg-orange-500/20 text-orange-300 text-xs font-bold border border-orange-500/30">教材课后思考题 02</span>
-                                <h3 class="text-lg font-extrabold text-white mt-2">以郑明物流公司为例，简要说明物流企业的未来发展方向？</h3>
+                <!-- 两道教材思考题独立研讨区 + 可折叠复盘解析 -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                    <!-- 思考题 1 -->
+                    <div class="bg-navy-900 rounded-2xl border border-navy-700/80 p-5 flex flex-col justify-between shadow-lg space-y-4">
+                        <div class="space-y-4">
+                            <div class="flex items-start justify-between gap-3">
+                                <div>
+                                    <span class="px-2.5 py-0.5 rounded bg-blue-500/20 text-blue-300 text-xs font-bold border border-blue-500/30">教材课后思考题 01</span>
+                                    <h3 class="text-lg font-extrabold text-white mt-2">郑明物流公司是如何制定脆薯项目的运输计划的？</h3>
+                                </div>
+                            </div>
+
+                            <!-- 观点卡片展示区 1 -->
+                            <div class="space-y-2.5">
+                                <div class="text-xs font-semibold text-slate-400">现场研讨观点墙：</div>
+                                <div id="cards-topic-1" class="space-y-2.5 max-h-[220px] overflow-y-auto pr-1">
+                                    <!-- 预设示例卡片 -->
+                                </div>
                             </div>
                         </div>
 
-                        <!-- 观点卡片展示区 2 -->
-                        <div class="space-y-2.5">
-                            <div class="text-xs font-semibold text-slate-400">现场研讨观点墙：</div>
-                            <div id="cards-topic-2" class="space-y-2.5 max-h-[220px] overflow-y-auto pr-1">
-                                <!-- 预设示例卡片 -->
+                        <!-- 折叠解析按钮与内容 -->
+                        <div class="pt-2 border-t border-navy-800">
+                            <button onclick="toggleAnalysis(1)" class="w-full py-2.5 px-4 rounded-xl bg-navy-800 hover:bg-navy-700 text-orange-400 font-bold text-sm border border-navy-600 transition flex items-center justify-between">
+                                <span><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>展开核心复盘解析（汇报总结用）</span>
+                                <i id="arrow-analysis-1" class="fa-solid fa-chevron-down transition-transform"></i>
+                            </button>
+                            <div id="analysis-box-1" class="hidden mt-3 bg-navy-950 rounded-xl p-4 border border-orange-500/40 text-xs text-slate-200 space-y-2 leading-relaxed">
+                                <p><strong class="text-orange-400">1. 物理路线重构（网状交通线分段接力）：</strong>打破传统长途直达，增加运输路线构建网状交通网络，在路线集中局域设立中转站，实行一车一段接力运行（必要时灵活调整），空余车辆对外出租，杜绝浪费与拥堵。</p>
+                                <p><strong class="text-orange-400">2. 质量与清点前置（多仓库分段质检）：</strong>在网状后半段设立多个仓库进行货物清点与入厂前质量监督，提前严控破皮、薯肉变质及淀粉/糖分含量标准，大幅提升交接效率。</p>
+                                <p><strong class="text-orange-400">3. 数字化精准管控（T-GPS + TMS + 物流交易系统）：</strong>接入中国冷藏网带温度回传的 T-GPS 实时监控位置、速度与车厢温度并支持轨迹回放；依托 TMS 统筹自有与挂靠车辆并实时记录作业过程；利用物流交易系统发布回程空车与闲置运力，实现跨区联运精准匹配。</p>
                             </div>
                         </div>
                     </div>
 
-                    <!-- 折叠解析按钮与内容 -->
-                    <div class="pt-2 border-t border-navy-800">
-                        <button onclick="toggleAnalysis(2)" class="w-full py-2.5 px-4 rounded-xl bg-navy-800 hover:bg-navy-700 text-orange-400 font-bold text-sm border border-navy-600 transition flex items-center justify-between">
-                            <span><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>展开核心复盘解析（汇报总结用）</span>
-                            <i id="arrow-analysis-2" class="fa-solid fa-chevron-down transition-transform"></i>
-                        </button>
-                        <div id="analysis-box-2" class="hidden mt-3 bg-navy-950 rounded-xl p-4 border border-orange-500/40 text-xs text-slate-200 space-y-2 leading-relaxed">
-                            <p><strong class="text-orange-400">1. 从“搬运箱子”向“全链条生态架构师”转型：</strong>打通从田间“最初一公里”到成品末端配送“最后一公里”的完整业务链条，实现供应链链条式协同设计。</p>
-                            <p><strong class="text-orange-400">2. 迈向“四流合一”的高端增值服务：</strong>突破单一运费收入瓶颈，向<strong>供应链金融</strong>（如动产质押垫资加速资金周转）与<strong>贸易执行</strong>（如半成品买断、全权销售赚取购销差价）深度渗透。</p>
-                            <p><strong class="text-orange-400">3. 数字化与平台化赋能：</strong>以物联网硬件（T-GPS）和算法交易平台为底座，整合社会闲置运力，从传统承运商升级为第四方供应链解决方案提供商（4PL）。</p>
+                    <!-- 思考题 2 -->
+                    <div class="bg-navy-900 rounded-2xl border border-navy-700/80 p-5 flex flex-col justify-between shadow-lg space-y-4">
+                        <div class="space-y-4">
+                            <div class="flex items-start justify-between gap-3">
+                                <div>
+                                    <span class="px-2.5 py-0.5 rounded bg-orange-500/20 text-orange-300 text-xs font-bold border border-orange-500/30">教材课后思考题 02</span>
+                                    <h3 class="text-lg font-extrabold text-white mt-2">以郑明物流公司为例，简要说明物流企业的未来发展方向？</h3>
+                                </div>
+                            </div>
+
+                            <!-- 观点卡片展示区 2 -->
+                            <div class="space-y-2.5">
+                                <div class="text-xs font-semibold text-slate-400">现场研讨观点墙：</div>
+                                <div id="cards-topic-2" class="space-y-2.5 max-h-[220px] overflow-y-auto pr-1">
+                                    <!-- 预设示例卡片 -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 折叠解析按钮与内容 -->
+                        <div class="pt-2 border-t border-navy-800">
+                            <button onclick="toggleAnalysis(2)" class="w-full py-2.5 px-4 rounded-xl bg-navy-800 hover:bg-navy-700 text-orange-400 font-bold text-sm border border-navy-600 transition flex items-center justify-between">
+                                <span><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>展开核心复盘解析（汇报总结用）</span>
+                                <i id="arrow-analysis-2" class="fa-solid fa-chevron-down transition-transform"></i>
+                            </button>
+                            <div id="analysis-box-2" class="hidden mt-3 bg-navy-950 rounded-xl p-4 border border-orange-500/40 text-xs text-slate-200 space-y-2 leading-relaxed">
+                                <p><strong class="text-orange-400">1. 从单一冷链运输商向专业供应链集成商转型：</strong>打通从“最先一公里”到产成品末端配送“最后一公里”的完整业务链条，针对车源、运输、销售、配送实施链条式方案设计，做到多方双赢。</p>
+                                <p><strong class="text-orange-400">2. 迈向“商流、物流、信息流、资金流”四流合一的高端增值服务：</strong>突破单一运费收入瓶颈，深度渗透<strong>动产质押供应链金融</strong>（垫付80%货款、账期60天缩至15天）与<strong>贸易执行</strong>（一次性买断半成品库存并全权销售赚取购销差价）。</p>
+                                <p><strong class="text-orange-400">3. 数字化与平台化协同赋能：</strong>将质量管理与 T-GPS 温控、TMS 调度系统、跨区域物流交易平台深度融合，整合社会闲置运力，迈向领先的专业供应链解决方案提供商。</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1307,8 +1409,875 @@
         }
 
         // =========================================================================
-        // 模块 4：课堂思考题与互动研讨墙逻辑
+        // 模块 4：课堂思考题与各小组提问研讨墙逻辑
         // =========================================================================
+        const case2GroupQA = [
+            {
+                groupId: 3,
+                label: '第3组',
+                theme: '温控保鲜 · 成本与盈利模式',
+                sourceFile: '第3组提问 11.25.docx',
+                note: '注：原Word提问将案例2表述为“蔬菜项目”，对应教材案例2中的生鲜马铃薯（脆薯）项目，回答紧扣教材案例2举措展开。',
+                questions: [
+                    {
+                        qNum: 1,
+                        question: '针对蔬菜这类易腐、对时效要求极高的商品，郑明物流在运输过程中采取了哪些具体的温控与保鲜措施来降低损耗率？',
+                        evidence: ['教材P007 运输计划/T-GPS', '教材P007 中转站与后半段多仓', '教材P007 TMS实时记录'],
+                        demoTab: 2,
+                        demoLabel: '联动演示：T-GPS温控与TMS系统',
+                        answerPoints: [
+                            {
+                                title: 'T-GPS 车载温控实时回传与溯源',
+                                detail: '将安装 GPS 车机的冷链车辆接入 T-GPS 系统（采用中国冷藏网提供的价格优惠、技术可靠的带温度回传功能装机方案），实时掌握车辆地理位置、速度与车厢温度，并可对特定时段运行轨迹回放、统计历史信息与生成报表，严防途中断链升温引发破皮、薯肉变质及淀粉/糖分超标。'
+                            },
+                            {
+                                title: '网状交通线分段接力，压缩在途搁置时长',
+                                detail: '构建网状交通网络，实行“一辆汽车负责一段路线（必要时可调整）”的分段接力运输，快速疏通 8 月底 9 月初酷暑收割季的集中运量，避免马铃薯因交通滞塞或搁置过久而腐损。'
+                            },
+                            {
+                                title: '局域中转站控质 + 后半段多仓前置质检',
+                                detail: '在路线集中局域设立中转站把控长途运输质量，避免路途中损失严重；同时在网络后半段设立多个仓库加快货物清点效率，并做好进入脆薯加工厂前的质量监督，确保达到严格标准。'
+                            },
+                            {
+                                title: 'TMS 全流程作业记录可控',
+                                detail: '通过运输管理系统（TMS）动态调整车辆运行状态、实时记录运输作业全过程，让冷链保鲜环节有序可控。'
+                            }
+                        ]
+                    },
+                    {
+                        qNum: 2,
+                        question: '在该项目的冷链物流运作中，郑明物流是如何平衡“高昂的冷链运输成本”与“客户对低价的需求”的？其核心盈利点在哪里？',
+                        evidence: ['教材P007 运输计划/物流交易系统', '教材P007 资金计划', '教材P008 后期计划'],
+                        demoTab: 3,
+                        demoLabel: '联动演示：动产质押与全权销售测算',
+                        answerPoints: [
+                            {
+                                title: '降本增效路径①：以网定车 + 闲置出租',
+                                detail: '根据网状路线实际使用情况动态核定车辆配置，避免旺季盲目扩充自有车队；将空余车辆对外出租，彻底避免冷链运力资源闲置浪费。'
+                            },
+                            {
+                                title: '降本增效路径②：物流交易系统消除空驶 + 高性价比硬件',
+                                detail: '将回程空车及其他闲置车辆信息发布到物流交易系统，实现跨区域联运协作与车货精准匹配，承运外部任务或委托他方闲置车辆摊薄成本；同时选用中国冷藏网价格优惠、技术可靠的带温度回传 GPS 装机方案控制投入。'
+                            },
+                            {
+                                title: '核心盈利点：从单一运费升级为“基础物流整合 + 金融增值 + 贸易购销差价”',
+                                detail: '郑明依托自身冷链网络优势整合从“最先一公里”到末端“最后一公里”的基础物流业务；借助动产质押取得货物配置控制权，在后期通过贸易执行业务一次性买断脆薯公司所有薯条半成品库存，再按麦当劳、肯德基等下游计划全权销售——凭借半成品购销差价与供应链金融/仓储整合，既有效保证自身盈利，又帮助脆薯解脱巨额库存占款与仓管费，实现双赢。'
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                groupId: 4,
+                label: '第4组',
+                theme: '降损保收益 · 难点与方案优化',
+                sourceFile: '第4组提问11.25.docx',
+                questions: [
+                    {
+                        qNum: 1,
+                        question: '郑明物流作为第三方冷链物流企业，应当如何做才能降低马铃薯运输途中破皮、变质的损耗，保障种植户的收益？',
+                        evidence: ['教材P006 案例背景', '教材P007 运输计划/T-GPS', '教材P007 资金计划'],
+                        demoTab: 1,
+                        demoLabel: '联动演示：网状分段调度沙盘',
+                        answerPoints: [
+                            {
+                                title: '网状分段接力，解决“运不及时、搁置变质”',
+                                detail: '增加运输路线、采用网状交通线，每段路线由专属车辆接力运行，高效疏通 8 月底 9 月初收割峰值，防止新鲜马铃薯因搁置过久而破皮、薯肉变质。'
+                            },
+                            {
+                                title: '中转站控质 + 后半段多仓监督，防入厂拒收',
+                                detail: '在路线集中局域设中转站控制长途质量、减少途损；在后半段设多个仓库提升清点效率，并加强马铃薯进厂前的质量监督（紧盯淀粉、糖分含量标准），避免被脆薯公司拒收导致种植户一年辛劳白费。'
+                            },
+                            {
+                                title: 'T-GPS 温控与 TMS 全程作业可控',
+                                detail: '接入带温度回传功能的 T-GPS 系统实时监控位置、速度与车厢温度，结合 TMS 实时记录运输作业过程并动态调车，杜绝冷链断链风险。'
+                            },
+                            {
+                                title: '动产质押垫资缩期，直接托底种植户回款',
+                                detail: '通过动产质押金融物流承揽支付剩余 80% 货款，将支付账期由 60 天缩短至 15 天，消除收购季资金瓶颈，让种植户安心丰收、及时回款。'
+                            }
+                        ]
+                    },
+                    {
+                        qNum: 2,
+                        question: '结合本案例，说说马铃薯脆薯项目在冷链运输中主要面临哪些难点？郑明物流可以从哪些方面优化马铃薯冷链运输方案？',
+                        evidence: ['教材P006-P007 问题提出', '教材P007-P008 具体措施'],
+                        demoTab: 1,
+                        demoLabel: '联动演示：传统模式 vs 郑明模式对比',
+                        answerPoints: [
+                            {
+                                title: '面临的四大核心难点',
+                                detail: '① 运输难：产区距哈尔滨远、车辆少、运输不专业，8 月底 9 月初集中上市类似“春运”，单纯增车不仅增加成本还加大后期交接难度；② 质量难：马铃薯保质期短、易破皮变质，脆薯对淀粉和糖分含量要求极高；③ 资金难：每个收购季脆薯需集中支付 2 亿多货款，短期筹资与账目处理压力大；④ 库存难：下游按期按量采购导致半成品积压严重。'
+                            },
+                            {
+                                title: '优化方向①：网络与节点重构',
+                                detail: '构建网状交通线 + 局域中转站 + 后半段多仓清点监督，推行一车一段接力，空余车辆对外出租。'
+                            },
+                            {
+                                title: '优化方向②：三大信息系统赋能',
+                                detail: '部署带温度回传的 T-GPS 温控追踪、分级权限动态排车的 TMS 运输管理系统，以及实现跨区联运和车货精准匹配的物流交易系统。'
+                            },
+                            {
+                                title: '优化方向③：供应链金融与贸易闭环延伸',
+                                detail: '以动产质押垫付 80% 货款（账期 60 天→15 天）强化现金流管理，后期一次性买断半成品库存并面向麦当劳、肯德基全权销售，实现“四流合一”。'
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                groupId: 6,
+                label: '第6组',
+                theme: '介入前困境 · 供应链集成商价值',
+                sourceFile: '第6组提问11.25.docx',
+                questions: [
+                    {
+                        qNum: 1,
+                        question: '在郑明物流介入之前，马铃薯种植户面临着怎样的运输困境和风险？',
+                        evidence: ['教材P006 一、案例背景', '教材P006 二、问题提出'],
+                        demoTab: 1,
+                        demoLabel: '联动演示：切换传统模式查看痛点',
+                        answerPoints: [
+                            {
+                                title: '路途遥远且专业运力极度匮乏',
+                                detail: '供应基地距离位于哈尔滨的脆薯食品公司距离远、当地运输车辆少、运输水平不专业，难以应对每年 8 月底 9 月初大量新鲜马铃薯集中外运的“春运式”高峰。'
+                            },
+                            {
+                                title: '保质期短引发严重途损与拒收风险',
+                                detail: '新鲜马铃薯保质期短，若不能及时运达，搁置时间一长便会出现破皮、薯肉变质及淀粉/糖分不达标情况；由于脆薯对质量标准要求极高，一旦被拒收，种植户一年的辛苦劳动就会白费。'
+                            },
+                            {
+                                title: '“丰收季变成焦虑期”的经营与回款压力',
+                                detail: '下游脆薯公司在每个收购季需集中支付 2 亿多货款、资金周转压力大且原支付账期长达 60 天，叠加运不出、易拒收的双重困境，使丰收季反倒成为种植户的焦虑期。'
+                            }
+                        ]
+                    },
+                    {
+                        qNum: 2,
+                        question: '郑明物流从单一冷链运输商转型为供应链集成商，对脆薯项目供应链稳定性带来哪些提升？',
+                        evidence: ['教材P006 案例背景', '教材P007-P008 具体措施', '教材P008 四、结束语'],
+                        demoTab: 3,
+                        demoLabel: '联动演示：四流合一商业闭环',
+                        answerPoints: [
+                            {
+                                title: '全链条链条式设计，消除断点风险',
+                                detail: '打通从田间“最先一公里”到产成品末端配送“最后一公里”的完整业务链条，针对车源、运输、销售、配送不同环节制定针对性方案，避免上下游脱节。'
+                            },
+                            {
+                                title: '运力与品控稳定性显著增强',
+                                detail: '通过网状分段运输、中转站与后半段多仓控质，以及 T-GPS、TMS 与物流交易系统跨区联运协同，确保收割高峰不滞塞、冷链不断链、质量稳达标。'
+                            },
+                            {
+                                title: '资金链稳定（上游回款加速、加工厂减负）',
+                                detail: '借助动产质押金融物流替脆薯承担剩余 80% 货款支付，并将账期由 60 天缩短至 15 天，破解超 2 亿元集中支付瓶颈，稳住种植户与加工厂合作关系。'
+                            },
+                            {
+                                title: '产销与库存稳定（买断全权销售实现购产销平衡）',
+                                detail: '一次性买断脆薯公司所有薯条半成品库存，按麦当劳、肯德基等下游客户采购计划全权销售配送，帮脆薯摆脱巨额库存占资与仓管费开支，实现供应链长期双赢。'
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                groupId: 7,
+                label: '第7组',
+                theme: '运力资源整合 · 长途冷链质控',
+                sourceFile: '第7组提问11.25.docx',
+                questions: [
+                    {
+                        qNum: 1,
+                        question: '在脆薯原料集中上市的短周期供应链中，郑明物流是如何通过运输资源整合，解决土豆供应链的季节性供需波动风险？',
+                        evidence: ['教材P007 运输计划', '教材P007 运输管理系统', '教材P007 物流交易系统'],
+                        demoTab: 1,
+                        demoLabel: '联动演示：跨区运力池与网状调度',
+                        answerPoints: [
+                            {
+                                title: '网络化动态配车与空余车辆出租',
+                                detail: '构建网状交通线，以网络统筹车辆情况（一车负责一段路线，必要时可灵活调整）；根据路线实际使用量判定车辆数量，高峰容纳大规模运量，空余车辆可对外出租，避免淡旺季切换带来的运力浪费。'
+                            },
+                            {
+                                title: 'TMS 统一整合自有车辆与挂靠车辆',
+                                detail: '将承接的运输任务及自有、挂靠车辆基本信息全部录入 TMS 系统，动态调整运行状态并科学安排派车计划；依托集团级多账户分权管理实现全局运力统筹。'
+                            },
+                            {
+                                title: '物流交易系统实现跨区域社会运力“削峰填谷”',
+                                detail: '旺季运力紧张时，将承接的运输任务发布到物流交易系统，委托其他运输公司的闲置车辆协同完成；平峰或返程时，把回程空车及其他闲置车辆信息发布到交易系统精准匹配货源，承运他方任务，平抑季节性波动风险。'
+                            }
+                        ]
+                    },
+                    {
+                        qNum: 2,
+                        question: '土豆属于生鲜易损原材料，郑明物流在长途冷链运输环节可以从哪些方面管控供应链质量，降低损耗？',
+                        evidence: ['教材P007 运输计划/T-GPS', '教材P007 中转站与多仓库', '教材P007 TMS作业记录'],
+                        demoTab: 2,
+                        demoLabel: '联动演示：T-GPS温控报警与处置',
+                        answerPoints: [
+                            {
+                                title: '中转站途中控质 + 后半段多仓入厂前监督',
+                                detail: '在路线集中局域设立中转站专门控制长途运输质量，避免马铃薯在途损失严重；在网络后半段设立多个仓库，既加大货物清点效率，又便于在进入加工厂前对破皮、变质及淀粉/糖分含量进行质量监督。'
+                            },
+                            {
+                                title: '分段接力缩短单车连续运行与等待时间',
+                                detail: '通过网状路线与分段专车接力，避免单车超长途疲劳与加工厂门口集中滞塞，压缩新鲜土豆的搁置时间。'
+                            },
+                            {
+                                title: 'T-GPS 实时温控监测与轨迹回放',
+                                detail: '依托中国冷藏网带温度回传功能的 GPS 车机接入 T-GPS 系统，实时掌握车厢温度、速度与地理位置，并通过轨迹回放与历史统计报表强化在途质量追溯。'
+                            },
+                            {
+                                title: 'TMS 全过程数字化作业留痕',
+                                detail: '通过运输管理系统对运输作业过程进行实时记录，确保装卸、中转、交接各节点标准执行、全程可控。'
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                groupId: 8,
+                label: '第8组',
+                theme: '一站式痛点破局 · 生鲜质控措施',
+                sourceFile: '第8组提问11.25.docx',
+                questions: [
+                    {
+                        qNum: 1,
+                        question: '脆薯项目土豆运输存在哪些难点，郑明物流是如何通过一站式供应链方案解决这些痛点的？',
+                        evidence: ['教材P006-P007 问题提出', '教材P007-P008 具体措施与结束语'],
+                        demoTab: 1,
+                        demoLabel: '联动演示：网状分段调度沙盘',
+                        answerPoints: [
+                            {
+                                title: '四大核心难点',
+                                detail: '① 集中运输难（距离远、车辆少、不专业，类似“春运”，单纯增车成本高且加大后期交接难度）；② 质量把控难（保质期短、易破皮变质，脆薯对淀粉、糖分标准要求高）；③ 资金筹集难（收购季需集中支付 2 亿多货款，账目与资金压力大）；④ 半成品积压难（下游客户按期按量采购，库存积压严重）。'
+                            },
+                            {
+                                title: '物流与信息流破局（网状分段 + 三大系统）',
+                                detail: '采用网状交通线分段接力、局域中转站控质、后半段多仓清点质检；叠加 T-GPS 实时温控轨迹监控、TMS 分级动态派车记录与物流交易系统跨区联运精准配载。'
+                            },
+                            {
+                                title: '资金流与商流破局（动产质押 + 贸易执行全权销售）',
+                                detail: '以动产质押金融物流替脆薯垫付剩余 80% 货款并将账期由 60 天缩至 15 天；后期一次性买断全部薯条半成品库存，按麦当劳、肯德基采购计划全权销售配送，打通“最先一公里”到“最后一公里”的一站式闭环。'
+                            }
+                        ]
+                    },
+                    {
+                        qNum: 2,
+                        question: '农产品生鲜冷链运输过程中，应当重点做好哪些质量管控措施来降低货损？',
+                        evidence: ['教材P007 运输计划/T-GPS', '教材P007 TMS与节点控质'],
+                        demoTab: 2,
+                        demoLabel: '联动演示：T-GPS车厢温控监控',
+                        answerPoints: [
+                            {
+                                title: '全程温度回传与在途动态监控',
+                                detail: '为冷链车辆加装带温度回传功能的 GPS 车机并接入 T-GPS 系统，实时掌握车厢温度、车速与位置，利用轨迹回放和历史统计报表及时发现并纠正温控偏差，守住淀粉、糖分等品质指标。'
+                            },
+                            {
+                                title: '设置中转站与后半段多仓前置质检',
+                                detail: '在路线集中区域借助中转站控制长途质量、防止途损扩大；在后半段依托多个仓库进行分流清点与入厂前质量监督，提前拦截破损变质品，降低整批拒收风险。'
+                            },
+                            {
+                                title: '优化运输组织缩短搁置时长',
+                                detail: '采用网状路线与分段接力运输避免高峰交通滞塞与工厂门口长时排队，从时间维度压降生鲜农产品的腐损率。'
+                            },
+                            {
+                                title: '作业过程实时记录与责任可追',
+                                detail: '通过 TMS 对自有及挂靠车辆的运输作业全过程实时记录，确保冷链操作有序可控，把质量管理深度融入供应链全流程。'
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                groupId: 9,
+                label: '第9组',
+                theme: '峰值运力调度 · 防磕碰与防变质',
+                sourceFile: '第9组提问11.25.docx',
+                questions: [
+                    {
+                        qNum: 1,
+                        question: '脆薯项目收购季运输需求高度集中，郑明物流如何做好运力调度，平衡运输时效与运输成本？',
+                        evidence: ['教材P007 运输计划', '教材P007 TMS与物流交易系统'],
+                        demoTab: 1,
+                        demoLabel: '联动演示：运量峰值与调度仿真',
+                        answerPoints: [
+                            {
+                                title: '网状交通线分段接力，兼顾高时效与低滞塞',
+                                detail: '采用网状路线容纳大规模峰值运量，避免交通滞塞；实行“一车负责一段路线、必要时可动态改变”，每段均有专属车辆运行，调配便捷且周转快。'
+                            },
+                            {
+                                title: '按路线使用量配车 + 空余车辆出租，严控固定成本',
+                                detail: '以网络动态整理车辆情况，依据路线实际需求判定配车数量，拒绝盲目购车；将空余车辆对外出租，消除运力资源闲置浪费。'
+                            },
+                            {
+                                title: 'TMS 分级权限动态派车，提升调度效率',
+                                detail: '将运输任务、自有和挂靠车辆信息录入 TMS，实时动态调整运行状态并生成科学派车计划；集团级用户通过多账户分权协作，让高并发调度轻松有条理。'
+                            },
+                            {
+                                title: '物流交易系统双向撮合，摊薄冷链运营成本',
+                                detail: '高峰缺车时通过交易系统委托外部闲置车辆分担任务；返程或闲置时发布回程空车信息精准匹配外部货源，大幅压低空驶率与单趟成本。'
+                            }
+                        ]
+                    },
+                    {
+                        qNum: 2,
+                        question: '土豆运输易发生磕碰损伤与腐烂变质，郑明物流在运输环节可以采取哪些手段控制货损？',
+                        evidence: ['教材P007 中转站/多仓监督', '教材P007 T-GPS与TMS'],
+                        demoTab: 2,
+                        demoLabel: '联动演示：T-GPS车速与温控曲线',
+                        answerPoints: [
+                            {
+                                title: '中转站分段控质，减少超长途颠簸与积热',
+                                detail: '打破单车超长途直达，在路线集中局域设立中转站进行分段接力与质量控制，避免土豆在漫长路途中持续磕碰破皮或闷热腐烂。'
+                            },
+                            {
+                                title: '后半段多仓分流清点与入厂前质检',
+                                detail: '在网络后半段建立多个仓库，一方面分散交接压力、提升货物清点效率，另一方面做好进入脆薯加工厂之前的质量监督，严控破损率与淀粉/糖分含量。'
+                            },
+                            {
+                                title: 'T-GPS 监控车速、温度与轨迹回放',
+                                detail: '接入带温度回传功能的 T-GPS 系统，实时监测车厢温度（防高温腐烂）与行驶速度（规范驾驶、减少剧烈颠簸磕碰），借助轨迹回放和历史报表加强车辆管控。'
+                            },
+                            {
+                                title: 'TMS 全程作业记录规范操作',
+                                detail: '通过运输管理系统实时记录各环节作业状态，使装运、中转、卸货全过程有序可控，有效压低人为操作造成的磕碰与货损。'
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                groupId: 10,
+                label: '第10组',
+                theme: '运输组织要点 · 为何不能单纯增车',
+                sourceFile: '第10组提问11.25.docx',
+                questions: [
+                    {
+                        qNum: 1,
+                        question: '马铃薯保鲜期短、易破损，郑明物流在运输组织上需要重点把控哪些要点？',
+                        evidence: ['教材P007 1.运输计划', '教材P007 2.TMS', '教材P007 3.物流交易系统'],
+                        demoTab: 1,
+                        demoLabel: '联动演示：网状分段调度沙盘',
+                        answerPoints: [
+                            {
+                                title: '路线组织：构建网状交通线 + 一车一段接力',
+                                detail: '增加运输路线形成交通网络，每段路线由专属车辆分段运行（必要情况下可灵活调整），按路线使用情况科学配车，空余车辆出租，避免峰值滞塞与资源浪费。'
+                            },
+                            {
+                                title: '节点组织：局域中转站控质 + 后半段多仓清点',
+                                detail: '在路线集中区域设中转站保障长途马铃薯质量；在网络后半段设多个仓库，大幅提升清点效率并加强进厂前质量监督（严控淀粉、糖分等指标）。'
+                            },
+                            {
+                                title: '监控组织：T-GPS 实时温控与轨迹溯源',
+                                detail: '为冷链车辆加装中国冷藏网带温度回传功能的 GPS 车机并接入 T-GPS 系统，实时掌握位置、速度、车厢温度，支持轨迹回放与历史统计报表。'
+                            },
+                            {
+                                title: '调度与协同组织：TMS 动态派车 + 物流交易系统联运',
+                                detail: '利用 TMS 统筹自有与挂靠车辆、实时记录作业全过程并分权管理；依托物流交易系统实现跨区域联运协作，精准匹配车货并盘活回程空车与社会闲置运力。'
+                            }
+                        ]
+                    },
+                    {
+                        qNum: 2,
+                        question: '为什么单纯增加车辆，无法解决本次马铃薯集中运输的难题？',
+                        evidence: ['教材P006-P007 二、问题提出', '教材P007-P008 具体措施'],
+                        demoTab: 1,
+                        demoLabel: '联动演示：传统直达拉高运量实测',
+                        answerPoints: [
+                            {
+                                title: '直接推高成本且造成季节性闲置浪费',
+                                detail: '案例明确指出，马铃薯集中运输类似“春运”问题，集中在 8 月底 9 月初爆发；单纯增加车辆“不仅不能完全解决，而且会增加成本”，在非收购季还会造成海量车辆空置浪费。'
+                            },
+                            {
+                                title: '显著加大后期货物交接与清点难度',
+                                detail: '案例原文特别强调单纯增车“还会增加后期的货物交接难度”——若缺乏网状分流与后半段多仓清点，大量直达车辆同时涌向哈尔滨加工厂门口，会造成严重拥堵与交接瘫痪。'
+                            },
+                            {
+                                title: '无法解决鲜薯搁置变质与高标准品控问题',
+                                detail: '车辆集中排队滞留反而拉长鲜薯搁置时间，酷暑下仍会导致破皮、薯肉变质及淀粉/糖分超标，缺乏中转站控质与 T-GPS 全程温控依旧面临加工厂拒收。'
+                            },
+                            {
+                                title: '未能化解产业链背后的资金与库存死结',
+                                detail: '单纯堆砌运力只是治标，无法解决脆薯公司 2 亿多集中支付货款的资金压力及半成品库存积压问题，必须依靠“网状运输 + 三大系统 + 动产质押 + 贸易执行”的整体供应链方案才能根本破局。'
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                groupId: 11,
+                label: '第11组',
+                theme: '供应链风险应对 · 集成方案破局',
+                sourceFile: '第11组提问11.25.docx',
+                questions: [
+                    {
+                        qNum: 1,
+                        question: '结合案例，分析郑明物流在马铃薯供应链中面临哪些主要风险，并简述应对思路。',
+                        evidence: ['教材P006 动产质押/问题提出', '教材P007 运输/交易/资金计划', '教材P008 后期计划'],
+                        demoTab: 3,
+                        demoLabel: '联动演示：资金流与风控测算',
+                        answerPoints: [
+                            {
+                                title: '峰值运力短缺与交通滞塞风险',
+                                detail: '应对思路：采用网状交通线与分段接力运输容纳峰值运量；利用 TMS 统筹自有/挂靠车辆，并通过物流交易系统调用外部闲置运力削峰填谷、空余车辆对外出租。'
+                            },
+                            {
+                                title: '生鲜货损与高标准拒收风险',
+                                detail: '应对思路：在路线集中局域设中转站控制途损，在后半段建多仓前置清点并严控入厂前质量（淀粉、糖分标准）；全面接入带温度回传的 T-GPS 系统实现温控与轨迹全程可追。'
+                            },
+                            {
+                                title: '巨额垫资与资金链周转风险（垫付 80% 货款、账期缩至 15 天）',
+                                detail: '应对思路：运用动产质押物流金融工具取得货物配置控制权作为债权担保（债务人违约时有权依法折价、拍卖或变卖优先受偿）；同时树立资金时间价值与现金流量观念，编制短/长期现金流量预测，优化资金筹措、使用与分配结构并健全资金控制制度。'
+                            },
+                            {
+                                title: '半成品买断后的库存积压与销售风险',
+                                detail: '应对思路：紧扣麦当劳、肯德基等下游大客户稳定的采购计划开展贸易执行与全权销售，做到购产销平衡，以购销差价与基础物流整合稳健覆盖风险。'
+                            }
+                        ]
+                    },
+                    {
+                        qNum: 2,
+                        question: '郑明物流如何借助冷链与供应链集成方案，解决种植户马铃薯季节性集中运输难题？',
+                        evidence: ['教材P007-P008 具体措施与结束语'],
+                        demoTab: 1,
+                        demoLabel: '联动演示：全链路沙盘与系统',
+                        answerPoints: [
+                            {
+                                title: '网状分段运输破解“春运式”集中外运拥堵',
+                                detail: '增加路线构成网状交通网络，一车负责一段接力运行，顺利消化 8 月底 9 月初海量鲜薯外运需求，避免交通滞塞与运力浪费。'
+                            },
+                            {
+                                title: '中转站 + 后半段多仓 + T-GPS 守住品质防线',
+                                detail: '通过中转站控质、多仓前置清点与质量监督，叠加带温度回传的 T-GPS 实时温控，避免马铃薯搁置破皮变质而被脆薯拒收，保障种植户辛劳不白费。'
+                            },
+                            {
+                                title: 'TMS + 物流交易系统破解“车辆少、不专业”',
+                                detail: '依托 TMS 统筹自有与挂靠专业冷链车队、实时记录作业；借助物流交易系统跨区域调集外部闲置冷链运力并盘活回程空车，高效补足季节性运力缺口。'
+                            },
+                            {
+                                title: '动产质押 + 贸易执行实现“四流合一”彻底解忧',
+                                detail: '承揽支付 80% 收购款并将账期由 60 天缩至 15 天，同时后期买断半成品库存并全权销售至麦当劳、肯德基，贯通全链条，让种植户告别“丰收焦虑期”。'
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                groupId: 12,
+                label: '第12组',
+                theme: '动产质押作用 · T-GPS核心价值',
+                sourceFile: '第12组提问11.25.docx',
+                questions: [
+                    {
+                        qNum: 1,
+                        question: '郑明物流项目里的动产质押物流金融起到了什么作用？',
+                        evidence: ['教材P006 案例涉及的基本知识点', '教材P007 4.资金计划', '教材P008 5.后期计划'],
+                        demoTab: 3,
+                        demoLabel: '联动演示：动产质押资金流测算器',
+                        answerPoints: [
+                            {
+                                title: '提供债权担保，锁定货物配置控制权',
+                                detail: '依据教材定义，债务人（脆薯公司）将动产移交债权人占有作为债权担保，违约时债权人有权依法折价或拍卖、变卖质物优先受偿。郑明借此安全取得货物配置控制权，大幅降低垫资风险。'
+                            },
+                            {
+                                title: '缓解 2 亿多集中付款压力，大幅加速资金周转',
+                                detail: '每个收购季脆薯需集中支付 2 亿多货款，郑明通过动产质押承揽下支付剩余 80% 款项的重任，并将支付账期由 60 天缩短到 15 天，极大缓解脆薯短期筹资与账目处理压力，也让种植户更快回款。'
+                            },
+                            {
+                                title: '撬动基础物流整合与贸易执行盈利闭环',
+                                detail: '以物流金融为纽带整合自身冷链网络基础业务，并顺势切入后期半成品一次性买断与全权销售，解脱脆薯巨额库存占资和仓管费，同时为郑明创造购销差价等高端增值收益，实现“四流合一”双赢。'
+                            }
+                        ]
+                    },
+                    {
+                        qNum: 2,
+                        question: 'T-GPS系统在马铃薯冷链运输中有什么作用？',
+                        evidence: ['教材P007 1.运输计划（T-GPS与中国冷藏网方案）'],
+                        demoTab: 2,
+                        demoLabel: '联动演示：T-GPS温控曲线与回放',
+                        answerPoints: [
+                            {
+                                title: '实时掌握位置、车速与车厢温度，守住冷链不断链',
+                                detail: '冷运公司将安装 GPS 车机的车辆接入 T-GPS 系统后，可实时掌握车辆的地理位置、行驶速度及车厢温度等关键信息，防止温度异常引发马铃薯破皮、变质及淀粉/糖分超标。'
+                            },
+                            {
+                                title: '支持历史轨迹回放、信息统计与报表生成',
+                                detail: '系统可对车辆某个时段的运行轨迹进行回放，并对历史运行与温控数据进行统计和生成报表，为冷链品质追溯、异常复盘与运输管理提供客观依据。'
+                            },
+                            {
+                                title: '低成本强化车队精细化管控',
+                                detail: '借助 T-GPS 系统，冷运公司能够显著加强对冷链车辆的全程管理；同时配合中国冷藏网提供的价格优惠、技术可靠的带温度回传功能 GPS 车机装机方案，以高性价比筑牢脆薯冷链运输防线。'
+                            }
+                        ]
+                    }
+                ]
+            }
+        ];
+
+        // 模块4交互状态
+        let qaViewMode = 'all'; // 'all' | 'focus'
+        let activeQaGroupId = 3; // 聚焦模式或最近跳转的小组ID
+        let activeNavKey = 'all'; // 'all' | groupId | 'textbook' | 'livewall'
+        let allAnswersExpanded = true;
+        const expandedAnswerMap = {};
+
+        // 初始化默认全部解答为展开状态
+        case2GroupQA.forEach(g => {
+            g.questions.forEach(q => {
+                expandedAnswerMap[`${g.groupId}-${q.qNum}`] = true;
+            });
+        });
+
+        function renderGroupJumpBar() {
+            const bar = document.getElementById('group-jump-bar');
+            if (!bar) return;
+
+            const isAllActive = activeNavKey === 'all' && qaViewMode === 'all';
+            let html = `
+                <button onclick="jumpToAllGroups()" class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                    isAllActive
+                        ? 'bg-orange-500 text-white shadow-md shadow-orange-500/30'
+                        : 'bg-navy-900 hover:bg-navy-800 text-slate-300 border border-navy-700'
+                }">
+                    <i class="fa-solid fa-border-all"></i> 全部小组 (9)
+                </button>
+                <span class="h-4 w-px bg-navy-700 mx-0.5 hidden sm:inline-block"></span>
+            `;
+
+            case2GroupQA.forEach(g => {
+                const isActive = (qaViewMode === 'focus' && activeQaGroupId === g.groupId) || activeNavKey === g.groupId;
+                html += `
+                    <button onclick="jumpToGroup(${g.groupId})" id="jump-btn-g${g.groupId}" class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                        isActive
+                            ? 'bg-orange-500 text-white shadow-md shadow-orange-500/30 ring-2 ring-orange-400/50'
+                            : 'bg-navy-900 hover:bg-navy-800 hover:border-orange-500/50 text-slate-200 border border-navy-700'
+                    }" title="${g.label}：${g.theme}">
+                        <span>${g.label}</span>
+                        <span class="text-[10px] px-1.5 py-0.2 rounded-full ${isActive ? 'bg-white/20 text-white' : 'bg-navy-800 text-slate-400'}">${g.questions.length}题</span>
+                    </button>
+                `;
+            });
+
+            html += `
+                <span class="h-4 w-px bg-navy-700 mx-0.5 hidden sm:inline-block"></span>
+                <button onclick="jumpToSpecialSection('textbook')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                    activeNavKey === 'textbook'
+                        ? 'bg-blue-500 text-white shadow-md'
+                        : 'bg-blue-500/15 hover:bg-blue-500/25 text-blue-300 border border-blue-500/30'
+                }">
+                    <i class="fa-solid fa-book-open"></i> 教材思考题 (2)
+                </button>
+                <button onclick="jumpToSpecialSection('livewall')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                    activeNavKey === 'livewall'
+                        ? 'bg-emerald-500 text-navy-950 shadow-md'
+                        : 'bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30'
+                }">
+                    <i class="fa-solid fa-microphone-lines"></i> 现场观点墙
+                </button>
+            `;
+
+            bar.innerHTML = html;
+        }
+
+        function renderGroupQACards() {
+            const container = document.getElementById('group-qa-container');
+            const focusNavBar = document.getElementById('focus-nav-bar');
+            const indicator = document.getElementById('qa-active-indicator');
+            if (!container) return;
+
+            const groupsToRender = qaViewMode === 'focus'
+                ? case2GroupQA.filter(g => g.groupId === activeQaGroupId)
+                : case2GroupQA;
+
+            if (qaViewMode === 'focus') {
+                focusNavBar.classList.remove('hidden');
+                const currentIdx = case2GroupQA.findIndex(g => g.groupId === activeQaGroupId);
+                const prevGroup = case2GroupQA[(currentIdx - 1 + case2GroupQA.length) % case2GroupQA.length];
+                const nextGroup = case2GroupQA[(currentIdx + 1) % case2GroupQA.length];
+                document.getElementById('btn-prev-group').innerHTML = `<i class="fa-solid fa-arrow-left text-orange-400"></i> <span>上一组：${prevGroup.label}</span>`;
+                document.getElementById('btn-next-group').innerHTML = `<span>下一组：${nextGroup.label}</span> <i class="fa-solid fa-arrow-right"></i>`;
+                document.getElementById('focus-current-label').textContent = `${case2GroupQA[currentIdx].label}（${case2GroupQA[currentIdx].theme}）`;
+                indicator.textContent = `单组聚焦投屏：${case2GroupQA[currentIdx].label} (${currentIdx + 1}/${case2GroupQA.length})`;
+            } else {
+                focusNavBar.classList.add('hidden');
+                if (typeof activeNavKey === 'number') {
+                    const g = case2GroupQA.find(item => item.groupId === activeNavKey);
+                    indicator.textContent = g ? `已定位：${g.label}（${g.theme}）` : '当前：全部小组总览 (9组)';
+                } else if (activeNavKey === 'textbook') {
+                    indicator.textContent = '已定位：教材课后思考题 (2题)';
+                } else if (activeNavKey === 'livewall') {
+                    indicator.textContent = '已定位：课堂现场观点收集器';
+                } else {
+                    indicator.textContent = '当前：全部小组总览 (9组 · 18题)';
+                }
+            }
+
+            container.innerHTML = groupsToRender.map(group => {
+                const groupAllOpen = group.questions.every(q => expandedAnswerMap[`${group.groupId}-${q.qNum}`]);
+                return `
+                    <article id="group-section-${group.groupId}" class="group-anchor bg-navy-900 rounded-2xl border border-navy-700/80 shadow-lg overflow-hidden transition-all duration-300">
+                        <!-- 小组头部栏 -->
+                        <div class="bg-navy-800/70 border-b border-navy-700/80 px-5 py-3.5 flex flex-wrap items-center justify-between gap-3">
+                            <div class="flex flex-wrap items-center gap-2.5">
+                                <span class="px-3 py-1 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 text-white text-sm font-extrabold shadow shadow-orange-500/20">
+                                    ${group.label}提问
+                                </span>
+                                <span class="px-2.5 py-1 rounded-lg bg-navy-950 text-orange-300 text-xs font-semibold border border-orange-500/30">
+                                    <i class="fa-solid fa-tag mr-1"></i>${group.theme}
+                                </span>
+                                <span class="hidden sm:inline-flex items-center gap-1 text-[11px] text-slate-400 bg-navy-950/70 px-2.5 py-1 rounded-lg border border-navy-700/60">
+                                    <i class="fa-regular fa-file-word text-blue-400"></i>${group.sourceFile}
+                                </span>
+                            </div>
+
+                            <!-- 组内快捷题号跳转与操作 -->
+                            <div class="flex flex-wrap items-center gap-2">
+                                ${group.questions.map(q => `
+                                    <button onclick="jumpToQuestion(${group.groupId}, ${q.qNum})" class="px-2.5 py-1 rounded-lg bg-navy-950 hover:bg-orange-500/20 hover:text-orange-300 hover:border-orange-500/40 text-slate-300 text-xs font-semibold border border-navy-700 transition">
+                                        直达 Q${q.qNum}
+                                    </button>
+                                `).join('')}
+                                <button onclick="toggleGroupAnswers(${group.groupId})" class="px-2.5 py-1 rounded-lg bg-navy-950 hover:bg-navy-700 text-slate-300 text-xs font-semibold border border-navy-700 transition">
+                                    <i class="fa-solid ${groupAllOpen ? 'fa-chevron-up' : 'fa-chevron-down'} text-orange-400 mr-1"></i>${groupAllOpen ? '收起本组' : '展开本组'}
+                                </button>
+                                ${qaViewMode === 'all' ? `
+                                    <button onclick="focusSingleGroup(${group.groupId})" class="px-2.5 py-1 rounded-lg bg-orange-500/15 hover:bg-orange-500 text-orange-300 hover:text-white text-xs font-bold border border-orange-500/40 transition" title="仅投屏展示该组问题">
+                                        <i class="fa-solid fa-expand mr-1"></i>聚焦投屏
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+
+                        ${group.note ? `
+                            <div class="mx-5 mt-4 px-3.5 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-200 flex items-center gap-2">
+                                <i class="fa-solid fa-circle-info text-amber-400 shrink-0"></i>
+                                <span>${group.note}</span>
+                            </div>
+                        ` : ''}
+
+                        <!-- 组内两道问题网格 -->
+                        <div class="p-5 grid grid-cols-1 ${qaViewMode === 'focus' ? 'lg:grid-cols-2' : 'xl:grid-cols-2'} gap-4">
+                            ${group.questions.map(q => {
+                                const key = `${group.groupId}-${q.qNum}`;
+                                const isOpen = !!expandedAnswerMap[key];
+                                return `
+                                    <div id="question-${group.groupId}-${q.qNum}" class="question-anchor bg-navy-950/90 rounded-2xl border border-navy-700/80 p-4 flex flex-col justify-between space-y-3.5 transition-all">
+                                        <div class="space-y-3">
+                                            <!-- 题目区 -->
+                                            <div class="flex items-start justify-between gap-3">
+                                                <div class="flex items-start gap-2.5">
+                                                    <span class="shrink-0 mt-0.5 px-2.5 py-0.5 rounded-lg bg-blue-500/20 text-blue-300 text-xs font-extrabold border border-blue-500/40">
+                                                        ${group.label} · Q${q.qNum}
+                                                    </span>
+                                                    <h4 class="text-sm md:text-base font-bold text-white leading-snug">
+                                                        ${q.question}
+                                                    </h4>
+                                                </div>
+                                                <button onclick="toggleSingleAnswer(${group.groupId}, ${q.qNum})" class="shrink-0 px-2.5 py-1 rounded-lg bg-navy-800 hover:bg-navy-700 text-orange-400 text-xs font-semibold border border-navy-600 transition flex items-center gap-1">
+                                                    <span>${isOpen ? '收起' : '解答'}</span>
+                                                    <i class="fa-solid fa-chevron-down transition-transform ${isOpen ? 'rotate-180' : ''}"></i>
+                                                </button>
+                                            </div>
+
+                                            <!-- 解答内容区 -->
+                                            <div id="answer-box-${key}" class="${isOpen ? '' : 'hidden'} bg-navy-900/90 rounded-xl p-4 border border-orange-500/30 space-y-2.5">
+                                                <div class="flex items-center justify-between border-b border-navy-800 pb-2">
+                                                    <span class="text-xs font-bold text-orange-400 flex items-center gap-1.5">
+                                                        <i class="fa-solid fa-lightbulb"></i> 案例2专业解答（依据教材背景与举措）
+                                                    </span>
+                                                </div>
+                                                <div class="space-y-2 text-xs md:text-[13px] text-slate-200 leading-relaxed">
+                                                    ${q.answerPoints.map((pt, idx) => `
+                                                        <p class="flex items-start gap-2">
+                                                            <span class="shrink-0 w-4 h-4 mt-0.5 rounded-full bg-orange-500/20 text-orange-400 text-[10px] font-bold flex items-center justify-center border border-orange-500/40">${idx + 1}</span>
+                                                            <span><strong class="text-orange-300">${pt.title}：</strong>${pt.detail}</span>
+                                                        </p>
+                                                    `).join('')}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- 底部案例依据与模块联动直达 -->
+                                        <div class="pt-2.5 border-t border-navy-800/80 flex flex-wrap items-center justify-between gap-2">
+                                            <div class="flex flex-wrap items-center gap-1.5">
+                                                ${q.evidence.map(ev => `
+                                                    <span class="text-[11px] px-2 py-0.5 rounded bg-navy-900 text-slate-400 border border-navy-700/80">
+                                                        <i class="fa-solid fa-bookmark text-blue-400 mr-1"></i>${ev}
+                                                    </span>
+                                                `).join('')}
+                                            </div>
+                                            <button onclick="jumpToDemoModule(${q.demoTab}, '${group.label} Q${q.qNum}')" class="text-[11px] px-2.5 py-1 rounded-lg bg-orange-500/15 hover:bg-orange-500 text-orange-300 hover:text-white font-semibold border border-orange-500/30 transition flex items-center gap-1">
+                                                <i class="fa-solid fa-up-right-from-square"></i> ${q.demoLabel}
+                                            </button>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </article>
+                `;
+            }).join('');
+
+            updateToggleAllButtonUI();
+        }
+
+        function updateToggleAllButtonUI() {
+            const btn = document.getElementById('btn-toggle-all-answers');
+            if (!btn) return;
+            const anyClosed = Object.values(expandedAnswerMap).some(v => !v);
+            allAnswersExpanded = !anyClosed;
+            btn.innerHTML = allAnswersExpanded
+                ? '<i class="fa-solid fa-eye-slash text-orange-400"></i> <span>收起全部解答</span>'
+                : '<i class="fa-solid fa-eye text-orange-400"></i> <span>展开全部解答</span>';
+        }
+
+        function setQaViewMode(mode, notify = true) {
+            qaViewMode = mode;
+            const btnAll = document.getElementById('btn-qa-view-all');
+            const btnFocus = document.getElementById('btn-qa-view-focus');
+
+            if (mode === 'focus') {
+                btnFocus.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-orange-500 text-white shadow';
+                btnAll.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white';
+                activeNavKey = activeQaGroupId;
+            } else {
+                btnAll.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-orange-500 text-white shadow';
+                btnFocus.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white';
+                if (activeNavKey === activeQaGroupId) activeNavKey = 'all';
+            }
+
+            renderGroupJumpBar();
+            renderGroupQACards();
+            if (notify) {
+                showToast(mode === 'focus' ? '已切换至【单组聚焦投屏模式】，适合课堂逐组答辩展示' : '已切换至【全组平铺总览模式】');
+            }
+        }
+
+        function focusSingleGroup(groupId) {
+            activeQaGroupId = groupId;
+            activeNavKey = groupId;
+            // 确保该组答案处于展开状态
+            const g = case2GroupQA.find(item => item.groupId === groupId);
+            if (g) {
+                g.questions.forEach(q => { expandedAnswerMap[`${groupId}-${q.qNum}`] = true; });
+            }
+            setQaViewMode('focus', false);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            showToast(`已聚焦投屏【第${groupId}组】案例2提问与解答`);
+        }
+
+        function jumpToAllGroups() {
+            activeNavKey = 'all';
+            if (qaViewMode !== 'all') {
+                setQaViewMode('all', false);
+            } else {
+                renderGroupJumpBar();
+                renderGroupQACards();
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            showToast('已切换至全部 9 个小组问题总览');
+        }
+
+        function jumpToGroup(groupId) {
+            activeQaGroupId = groupId;
+            activeNavKey = groupId;
+
+            // 跳转时自动展开该组答案
+            const group = case2GroupQA.find(g => g.groupId === groupId);
+            if (group) {
+                group.questions.forEach(q => {
+                    expandedAnswerMap[`${groupId}-${q.qNum}`] = true;
+                });
+            }
+
+            renderGroupJumpBar();
+            renderGroupQACards();
+
+            requestAnimationFrame(() => {
+                const target = document.getElementById(`group-section-${groupId}`);
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    target.classList.remove('jump-highlight');
+                    void target.offsetWidth;
+                    target.classList.add('jump-highlight');
+                }
+            });
+
+            if (group) {
+                showToast(`已跳转至【${group.label}】案例2提问（${group.theme}）`);
+            }
+        }
+
+        function jumpToQuestion(groupId, qNum) {
+            expandedAnswerMap[`${groupId}-${qNum}`] = true;
+            renderGroupQACards();
+
+            requestAnimationFrame(() => {
+                const el = document.getElementById(`question-${groupId}-${qNum}`);
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    el.classList.remove('jump-highlight');
+                    void el.offsetWidth;
+                    el.classList.add('jump-highlight');
+                }
+            });
+            showToast(`已定位至【第${groupId}组 · 问题 ${qNum}】`);
+        }
+
+        function navigateFocusGroup(delta) {
+            const idx = case2GroupQA.findIndex(g => g.groupId === activeQaGroupId);
+            const nextIdx = (idx + delta + case2GroupQA.length) % case2GroupQA.length;
+            const nextGroup = case2GroupQA[nextIdx];
+            focusSingleGroup(nextGroup.groupId);
+        }
+
+        function jumpToSpecialSection(sectionKey) {
+            activeNavKey = sectionKey;
+            renderGroupJumpBar();
+            const targetId = sectionKey === 'textbook' ? 'textbook-section' : 'live-wall-section';
+            const el = document.getElementById(targetId);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                el.classList.remove('jump-highlight');
+                void el.offsetWidth;
+                el.classList.add('jump-highlight');
+            }
+            showToast(sectionKey === 'textbook' ? '已跳转至【教材课后思考题】复盘区' : '已跳转至【课堂现场观点收集器】');
+        }
+
+        function toggleSingleAnswer(groupId, qNum) {
+            const key = `${groupId}-${qNum}`;
+            expandedAnswerMap[key] = !expandedAnswerMap[key];
+            renderGroupQACards();
+        }
+
+        function toggleGroupAnswers(groupId) {
+            const group = case2GroupQA.find(g => g.groupId === groupId);
+            if (!group) return;
+            const allOpen = group.questions.every(q => expandedAnswerMap[`${groupId}-${q.qNum}`]);
+            group.questions.forEach(q => {
+                expandedAnswerMap[`${groupId}-${q.qNum}`] = !allOpen;
+            });
+            renderGroupQACards();
+        }
+
+        function toggleAllGroupAnswers() {
+            const targetState = !allAnswersExpanded;
+            case2GroupQA.forEach(g => {
+                g.questions.forEach(q => {
+                    expandedAnswerMap[`${g.groupId}-${q.qNum}`] = targetState;
+                });
+            });
+            renderGroupQACards();
+            showToast(targetState ? '已展开全部 9 个小组的案例解答' : '已收起全部解答（适合课堂先提问后揭晓）');
+        }
+
+        function jumpToDemoModule(tabIndex, fromLabel) {
+            switchTab(tabIndex);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            const tabNames = { 1: '网状分段调度沙盘', 2: 'T-GPS温控与TMS系统', 3: '动产质押与全权销售测算' };
+            showToast(`已从【${fromLabel}】联动跳转至【${tabNames[tabIndex]}】进行直观演示`);
+        }
+
         function renderIdeaCards() {
             [1, 2].forEach(topicNum => {
                 const container = document.getElementById(`cards-topic-${topicNum}`);
@@ -1359,7 +2328,7 @@
 
             contentInput.value = '';
             renderIdeaCards();
-            showToast(`观点已成功投屏至【思考题 ${topic}】研讨墙！`);
+            showToast(`观点已成功投屏至【教材思考题 ${topic}】研讨墙！`);
         }
 
         function deleteIdeaCard(id) {
@@ -1381,6 +2350,15 @@
             arrow.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
         }
 
+        // 支持单组聚焦模式键盘左右键切换小组
+        document.addEventListener('keydown', (e) => {
+            if (currentTab !== 4 || qaViewMode !== 'focus') return;
+            const tag = document.activeElement?.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+            if (e.key === 'ArrowLeft') navigateFocusGroup(-1);
+            if (e.key === 'ArrowRight') navigateFocusGroup(1);
+        });
+
         // =========================================================================
         // 页面初始化
         // =========================================================================
@@ -1396,6 +2374,8 @@
 
             renderVehicleList();
             updateFinanceCalc();
+            renderGroupJumpBar();
+            renderGroupQACards();
             renderIdeaCards();
         };
     </script>
