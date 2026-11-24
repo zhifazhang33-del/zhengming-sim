@@ -610,7 +610,7 @@
                             <i class="fa-solid fa-layer-group mr-1"></i>案例2 · 郑明物流的脆薯项目运输
                         </span>
                         <span class="px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 text-xs font-semibold border border-blue-500/30">
-                            已收录 9 个小组 · 18 道案例提问 + 2 道教材思考题
+                            已收录 10 个小组 · 20 道案例提问 + 2 道教材思考题
                         </span>
                     </div>
                     <h2 class="text-lg md:text-xl font-extrabold text-white mt-2 flex items-center gap-2">
@@ -646,7 +646,7 @@
                         各小组问题快速跳转导航（点击组别直达对应提问与解答）：
                     </div>
                     <div class="flex items-center gap-2 text-[11px] text-slate-400">
-                        <span id="qa-active-indicator" class="px-2 py-0.5 rounded bg-navy-900 border border-navy-700 text-slate-300">当前：全部小组总览 (9组)</span>
+                        <span id="qa-active-indicator" class="px-2 py-0.5 rounded bg-navy-900 border border-navy-700 text-slate-300">当前：全部小组总览 (10组)</span>
                     </div>
                 </div>
                 <div id="group-jump-bar" class="flex flex-wrap items-center gap-2">
@@ -656,7 +656,7 @@
 
             <!-- 各小组提问与案例解答主展示区 -->
             <div id="group-qa-container" class="space-y-5">
-                <!-- JS 动态渲染 9 个小组卡片（支持全组平铺与单组聚焦投屏模式） -->
+                <!-- JS 动态渲染 10 个小组卡片（支持全组平铺与单组聚焦投屏模式） -->
             </div>
 
             <!-- 单组聚焦模式底部切换条（仅在聚焦模式显示） -->
@@ -1526,6 +1526,64 @@
                 ]
             },
             {
+                groupId: 5,
+                label: '第5组',
+                theme: '三大系统破局 · 动产质押与未来方向',
+                sourceFile: '第5组提问(2).docx',
+                questions: [
+                    {
+                        qNum: 1,
+                        question: '脆薯项目在马铃薯运输过程中面临哪些主要问题？郑明物流是如何通过运输计划、运输管理系统和物流交易系统加以解决的？',
+                        evidence: ['教材P006-P007 问题提出', '教材P007 1.运输计划/T-GPS', '教材P007 2.TMS与3.物流交易系统'],
+                        demoTab: 1,
+                        demoLabel: '联动演示：网状调度与物流交易系统',
+                        answerPoints: [
+                            {
+                                title: '面临的主要运输问题',
+                                detail: '产区距哈尔滨加工厂距离远、车辆少、运输水平不专业；马铃薯保质期短，不能及时运达搁置一长就会破皮、薯肉变质，且脆薯公司对淀粉、糖分含量要求极高；每年 8 月底 9 月初集中运输类似“春运”，短时间直接运送难以高质量完成，单纯增加车辆不仅增加成本，还会加大后期货物交接难度。'
+                            },
+                            {
+                                title: '运输计划（网状分段 + 中转多仓 + T-GPS）',
+                                detail: '增加运输路线、采用网状交通线构建交通网络，实行一车负责一段路线（必要情况下可改变），按路线使用情况判定车辆多少，空余车辆出租避免浪费；在路线集中局域设立中转站保障长途质量，在后半段设立多个仓库提升清点效率与入厂前质量监督；并接入中国冷藏网带温度回传功能的 T-GPS 系统，实时掌握地理位置、速度、车厢温度并支持轨迹回放与历史统计报表。'
+                            },
+                            {
+                                title: '运输管理系统（TMS）',
+                                detail: '将承接的运输任务、自有和挂靠车辆基本信息录入系统，动态调整车辆运行状态，方便安排派车计划；对运输作业过程进行实时记录使作业有序可控；并区分企业级和集团级用户，支持集团多账户登录与分权管理。'
+                            },
+                            {
+                                title: '物流交易系统',
+                                detail: '帮助冷运公司间实现跨区域联运协作及车货精准匹配——既可将回程空车及其他闲置车辆信息发布至交易系统承运他方任务，也可将承接的运输任务发布至平台委托他方闲置车辆完成，彻底化解峰值运力瓶颈与空驶浪费。'
+                            }
+                        ]
+                    },
+                    {
+                        qNum: 2,
+                        question: '案例中的动产质押（物流金融）在脆薯项目资金计划中起到了什么作用？结合案例说明物流企业未来可向哪些高端增值服务方向发展？',
+                        evidence: ['教材P006 动产质押知识点', '教材P007 4.资金计划', '教材P008 5.后期计划与结束语'],
+                        demoTab: 3,
+                        demoLabel: '联动演示：动产质押与全权销售测算',
+                        answerPoints: [
+                            {
+                                title: '动产质押在资金计划中的核心作用',
+                                detail: '① 债权担保与控货：脆薯将动产移交郑明占有作为债权担保（违约时债权人有权依法折价或拍卖、变卖优先受偿），郑明借此安全取得货物配置控制权；② 垫资缩期解困：面对每个收购季 2 亿多元集中货款压力，郑明承揽支付剩余 80% 款项的重任，并将支付账期由 60 天缩短至 15 天，大幅缓解脆薯短期筹资与账目处理压力；③ 强化资金周转与现金流管理：结合资金运动规律、资金时间价值与现金流量预测，优化筹资、使用与分配结构，促进购产销平衡。'
+                            },
+                            {
+                                title: '未来发展方向①：供应链金融物流服务',
+                                detail: '依托自身冷链仓储网络与风控优势，以动产质押等物流金融工具为客户解决资金周转瓶颈，增强客户黏性并开辟高附加值金融收益。'
+                            },
+                            {
+                                title: '未来发展方向②：物流与贸易深度融合（贸易执行）',
+                                detail: '参照郑明后期一次性买断脆薯所有薯条半成品库存、按麦当劳/肯德基采购计划全权销售的模式，帮客户解脱巨额库存占资与仓管费，同时通过半成品购销差价与基础物流整合突破单一运费盈利天花板。'
+                            },
+                            {
+                                title: '未来发展方向③：全链条专业供应链集成商',
+                                detail: '贯通从“最先一公里”到产成品末端配送“最后一公里”的完整业务链条，将质量管理、数字化系统（T-GPS/TMS/交易系统）与链条式方案设计深度融合，迈向“商流、物流、信息流、资金流”四流合一的领先供应链解决方案提供商。'
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
                 groupId: 6,
                 label: '第6组',
                 theme: '介入前困境 · 供应链集成商价值',
@@ -1931,6 +1989,7 @@
             const bar = document.getElementById('group-jump-bar');
             if (!bar) return;
 
+            const totalGroups = case2GroupQA.length;
             const isAllActive = activeNavKey === 'all' && qaViewMode === 'all';
             let html = `
                 <button onclick="jumpToAllGroups()" class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
@@ -1938,7 +1997,7 @@
                         ? 'bg-orange-500 text-white shadow-md shadow-orange-500/30'
                         : 'bg-navy-900 hover:bg-navy-800 text-slate-300 border border-navy-700'
                 }">
-                    <i class="fa-solid fa-border-all"></i> 全部小组 (9)
+                    <i class="fa-solid fa-border-all"></i> 全部小组 (${totalGroups})
                 </button>
                 <span class="h-4 w-px bg-navy-700 mx-0.5 hidden sm:inline-block"></span>
             `;
@@ -1998,16 +2057,18 @@
                 document.getElementById('focus-current-label').textContent = `${case2GroupQA[currentIdx].label}（${case2GroupQA[currentIdx].theme}）`;
                 indicator.textContent = `单组聚焦投屏：${case2GroupQA[currentIdx].label} (${currentIdx + 1}/${case2GroupQA.length})`;
             } else {
+                const totalGroups = case2GroupQA.length;
+                const totalQuestions = case2GroupQA.reduce((sum, g) => sum + g.questions.length, 0);
                 focusNavBar.classList.add('hidden');
                 if (typeof activeNavKey === 'number') {
                     const g = case2GroupQA.find(item => item.groupId === activeNavKey);
-                    indicator.textContent = g ? `已定位：${g.label}（${g.theme}）` : '当前：全部小组总览 (9组)';
+                    indicator.textContent = g ? `已定位：${g.label}（${g.theme}）` : `当前：全部小组总览 (${totalGroups}组)`;
                 } else if (activeNavKey === 'textbook') {
                     indicator.textContent = '已定位：教材课后思考题 (2题)';
                 } else if (activeNavKey === 'livewall') {
                     indicator.textContent = '已定位：课堂现场观点收集器';
                 } else {
-                    indicator.textContent = '当前：全部小组总览 (9组 · 18题)';
+                    indicator.textContent = `当前：全部小组总览 (${totalGroups}组 · ${totalQuestions}题)`;
                 }
             }
 
@@ -2174,7 +2235,7 @@
                 renderGroupQACards();
             }
             window.scrollTo({ top: 0, behavior: 'smooth' });
-            showToast('已切换至全部 9 个小组问题总览');
+            showToast(`已切换至全部 ${case2GroupQA.length} 个小组问题总览`);
         }
 
         function jumpToGroup(groupId) {
@@ -2268,7 +2329,7 @@
                 });
             });
             renderGroupQACards();
-            showToast(targetState ? '已展开全部 9 个小组的案例解答' : '已收起全部解答（适合课堂先提问后揭晓）');
+            showToast(targetState ? `已展开全部 ${case2GroupQA.length} 个小组的案例解答` : '已收起全部解答（适合课堂先提问后揭晓）');
         }
 
         function jumpToDemoModule(tabIndex, fromLabel) {
